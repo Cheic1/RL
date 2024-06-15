@@ -6,7 +6,7 @@
 #include <OneButton.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
-
+const int pump_pin = D8;
 // Credenziali Wi-Fi
 const char *ssid = "Telecom-15744621";
 const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
@@ -28,7 +28,7 @@ struct PinConfig
 
 PinConfig pinConfigs[maxPins];
 int pinConfigCount = 0;
-const int pump_pin = D3;
+
 OneButton butt1(D5, 2);
 OneButton butt2(D6, 2);
 OneButton humidity_sens(D4, 2);
@@ -282,37 +282,61 @@ void newMsg(FB_msg &msg)
     }
   }
 
-  
   if (msg.text.startsWith("https://github.com/"))
   {
-    bot.sendMessage("Download e aggiornamento del firmware in corso...");
-    WiFiClient client;
-    String firmwareURL = msg.text;
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, firmwareURL);
+    bot.sendMessage("Verifica della data di caricamento del firmware...");
 
-    switch (ret)
+    String firmwareURL = msg.text;
+    HTTPClient http;
+    WiFiClient client1;
+    // Invia una richiesta HEAD per ottenere le informazioni dell'intestazione
+    http.begin(client1, firmwareURL);
+    int httpCode = http.sendRequest("HEAD");
+
+    if (httpCode == HTTP_CODE_OK)
     {
-    case HTTP_UPDATE_FAILED:
-      bot.sendMessage("Aggiornamento fallito: " + String(ESPhttpUpdate.getLastErrorString().c_str()));
-      break;
-    case HTTP_UPDATE_NO_UPDATES:
-      bot.sendMessage("Nessun aggiornamento disponibile.");
-      break;
-    case HTTP_UPDATE_OK:
-      bot.sendMessage("Aggiornamento completato con successo!");
-      break;
+      // Ottieni la data di caricamento dall'intestazione
+      String lastModified = http.header("Last-Modified");
+      bot.sendMessage("Data di caricamento del firmware: " + lastModified);
+
+      bot.sendMessage("Download e aggiornamento del firmware in corso...");
+
+      // Termina la connessione HTTPClient e utilizza la connessione di ESPhttpUpdate
+      http.end();
+
+      
+      t_httpUpdate_return ret = ESPhttpUpdate.update(client1, firmwareURL);
+
+      switch (ret)
+      {
+      case HTTP_UPDATE_FAILED:
+        bot.sendMessage("Aggiornamento fallito: " + String(ESPhttpUpdate.getLastErrorString().c_str()));
+        break;
+      case HTTP_UPDATE_NO_UPDATES:
+        bot.sendMessage("Nessun aggiornamento disponibile.");
+        break;
+      case HTTP_UPDATE_OK:
+        bot.sendMessage("Aggiornamento completato con successo!");
+        break;
+      }
+    }
+    else
+    {
+      bot.sendMessage("Impossibile ottenere la data di caricamento del firmware. Codice errore: " + String(httpCode));
+      http.end();
     }
   }
 }
-
-bool Stato = false;
+int Stato = 1;
 void handleButton1()
 {
   bot.sendMessage("Pulsante 1 premuto!");
+  bot.sendMessage(String(digitalRead(pump_pin)) + " " + String(Stato));
   digitalWrite(pump_pin, Stato);
   delay(100);
+  Stato = 1 - Stato;
+  bot.sendMessage(String(digitalRead(pump_pin)) + " " + String(Stato));
   isIrrigating = false;
-  Stato = !Stato;
 }
 
 void handleButton2()
@@ -383,6 +407,11 @@ void setup()
 
   pinMode(pump_pin, OUTPUT);
   digitalWrite(pump_pin, LOW);
+  delay(500);
+  digitalWrite(pump_pin, HIGH);
+  delay(500);
+  digitalWrite(pump_pin, LOW);
+  delay(500);
 }
 
 void loop()
