@@ -4,16 +4,17 @@
 #include <FastBot.h>
 #include <EEPROM.h>
 #include <OneButton.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
 
 // Credenziali Wi-Fi
 const char *ssid = "Telecom-15744621";
 const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 #define CHAT_ID "217950359"
 
-
-unsigned long irrigationStartTime = 0;  // Variabile per memorizzare l'ora di inizio dell'irrigazione
-bool isIrrigating = false;              // Stato dell'irrigazione
-unsigned long irrigationDuration = 5*1000;   //Durata dell'irrigazione
+unsigned long irrigationStartTime = 0;       // Variabile per memorizzare l'ora di inizio dell'irrigazione
+bool isIrrigating = false;                   // Stato dell'irrigazione
+unsigned long irrigationDuration = 5 * 1000; // Durata dell'irrigazione
 
 // Definizione dei PIN e altre variabili globali
 const int maxPins = 10; // Numero massimo di PIN configurabili
@@ -194,100 +195,148 @@ void handleMenu(int menuNum, const char *answers, const char *callbacks)
   bot.editMenuCallback(menuID, menu, callbacks);
   depth = 1;
 }
-void displayMenu(String menu, int depth) {
-    String menuOptions;
-    String menuCallbacks;
+void displayMenu(String menu, int depth)
+{
+  String menuOptions;
+  String menuCallbacks;
 
-    if (menu == "config:d1") {
-        menuOptions = "PIN IO \t Altre Configurazioni \t EEPROM \t Back";
-        menuCallbacks = "pin_io:d2, other_configs:d2, eeprom:d2, back_main:d0";
-    } else if (menu == "pin:d1") {
-        menuOptions = "Controlla Output \t Visualizza Input \t Overview PIN \t Back";
-        menuCallbacks = "control_output:d2, view_input:d2, overview_pin:d2, back_main:d0";
-    } else if (menu == "debug:d1") {
-        menuOptions = "Debug Serial \t Debug Telegram \t Debug Entrambi \t Disabilita Debug \t Back";
-        menuCallbacks = "debug_serial:d2, debug_telegram:d2, debug_both:d2, debug_none:d2, back_main:d0";
-    } else if (menu == "pin_io:d2") {
-        menuOptions = "Inserisci PIN da configurare \t Inserisci nome del PIN \t Seleziona tipo di PIN \t Conferma configurazione \t Annulla configurazione \t Back";
-        menuCallbacks = "pin_config:d3, pin_name:d3, pin_type:d3, confirm_config:d3, cancel_config:d3, back_config:d3";
-    } else if (menu == "eeprom:d2") {
-        menuOptions = "Reset \t Visualizza \t Back";
-        menuCallbacks = "reset_eeprom:d3, view_eeprom:d3, back_config:d3";
-    } else if (menu == "control_output:d2") {
-        menuOptions = "[Lista PIN Output configurati] \t Toggle PIN Output \t Back";
-        menuCallbacks = "toggle_pin_output:d3, toggle_pin_output:d3, back_pin_output:d3";
-    } else if (menu == "view_input:d2") {
-        menuOptions = "[Stato PIN Input configurati] \t Back";
-        menuCallbacks = "view_input_status:d3, back_pin_output:d3";
-    } else if (menu == "overview_pin:d2") {
-        menuOptions = "[Lista e stato PIN Input] \t [Lista e stato PIN Output] \t Back";
-        menuCallbacks = "overview_pin_input:d3, overview_pin_output:d3, back_pin:d3";
-    } else {
-        menuOptions = "Back";
-        menuCallbacks = "back_main:d0";
-    }
+  if (menu == "config:d1")
+  {
+    menuOptions = "PIN IO \t Altre Configurazioni \t EEPROM \t Back";
+    menuCallbacks = "pin_io:d2, other_configs:d2, eeprom:d2, back_main:d0";
+  }
+  else if (menu == "pin:d1")
+  {
+    menuOptions = "Controlla Output \t Visualizza Input \t Overview PIN \t Back";
+    menuCallbacks = "control_output:d2, view_input:d2, overview_pin:d2, back_main:d0";
+  }
+  else if (menu == "debug:d1")
+  {
+    menuOptions = "Debug Serial \t Debug Telegram \t Debug Entrambi \t Disabilita Debug \t Back";
+    menuCallbacks = "debug_serial:d2, debug_telegram:d2, debug_both:d2, debug_none:d2, back_main:d0";
+  }
+  else if (menu == "pin_io:d2")
+  {
+    menuOptions = "Inserisci PIN da configurare \t Inserisci nome del PIN \t Seleziona tipo di PIN \t Conferma configurazione \t Annulla configurazione \t Back";
+    menuCallbacks = "pin_config:d3, pin_name:d3, pin_type:d3, confirm_config:d3, cancel_config:d3, back_config:d3";
+  }
+  else if (menu == "eeprom:d2")
+  {
+    menuOptions = "Reset \t Visualizza \t Back";
+    menuCallbacks = "reset_eeprom:d3, view_eeprom:d3, back_config:d3";
+  }
+  else if (menu == "control_output:d2")
+  {
+    menuOptions = "[Lista PIN Output configurati] \t Toggle PIN Output \t Back";
+    menuCallbacks = "toggle_pin_output:d3, toggle_pin_output:d3, back_pin_output:d3";
+  }
+  else if (menu == "view_input:d2")
+  {
+    menuOptions = "[Stato PIN Input configurati] \t Back";
+    menuCallbacks = "view_input_status:d3, back_pin_output:d3";
+  }
+  else if (menu == "overview_pin:d2")
+  {
+    menuOptions = "[Lista e stato PIN Input] \t [Lista e stato PIN Output] \t Back";
+    menuCallbacks = "overview_pin_input:d3, overview_pin_output:d3, back_pin:d3";
+  }
+  else
+  {
+    menuOptions = "Back";
+    menuCallbacks = "back_main:d0";
+  }
 
-    bot.inlineMenuCallback(menu, menuOptions, menuCallbacks);
+  bot.inlineMenuCallback(menu, menuOptions, menuCallbacks);
 }
-
 
 String currentMenu = "/menu:d0";
 
-void newMsg(FB_msg &msg) {
-    debug("Ricevuto messaggio:\n " + msg.toString());
+void newMsg(FB_msg &msg)
+{
+  debug("Ricevuto messaggio:\n " + msg.toString());
 
-    if (msg.OTA)
-        bot.update();
+  if (msg.OTA)
+    bot.update();
 
-    if (msg.text == "/menu" || msg.data.startsWith("back")) {
-        if (depth == 0) {
-            currentMenu = "/menu:d0";
-            bot.inlineMenuCallback("Menu principale", "Configurazione \t Pin \t Debug", "config:d1, pin:d1, debug:d1");
-        } else {
-            depth--;
-            currentMenu = currentMenu.substring(0, currentMenu.lastIndexOf(':'));
-            displayMenu(currentMenu, depth);
-        }
-    } else {
-        if (msg.data != "") {
-            depth++;
-            currentMenu = msg.data;
-            displayMenu(currentMenu, depth);
-        }
+  if (msg.text == "/menu" || msg.data.startsWith("back"))
+  {
+    if (depth == 0)
+    {
+      currentMenu = "/menu:d0";
+      bot.inlineMenuCallback("Menu principale", "Configurazione \t Pin \t Debug", "config:d1, pin:d1, debug:d1");
     }
+    else
+    {
+      depth--;
+      currentMenu = currentMenu.substring(0, currentMenu.lastIndexOf(':'));
+      displayMenu(currentMenu, depth);
+    }
+  }
+  else
+  {
+    if (msg.data != "")
+    {
+      depth++;
+      currentMenu = msg.data;
+      displayMenu(currentMenu, depth);
+    }
+  }
+
+  
+  if (msg.text.startsWith("https://github.com/"))
+  {
+    bot.sendMessage("Download e aggiornamento del firmware in corso...");
+    WiFiClient client;
+    String firmwareURL = msg.text;
+    t_httpUpdate_return ret = ESPhttpUpdate.update(client, firmwareURL);
+
+    switch (ret)
+    {
+    case HTTP_UPDATE_FAILED:
+      bot.sendMessage("Aggiornamento fallito: " + String(ESPhttpUpdate.getLastErrorString().c_str()));
+      break;
+    case HTTP_UPDATE_NO_UPDATES:
+      bot.sendMessage("Nessun aggiornamento disponibile.");
+      break;
+    case HTTP_UPDATE_OK:
+      bot.sendMessage("Aggiornamento completato con successo!");
+      break;
+    }
+  }
 }
 
-
-
-void handleButton1() {
+void handleButton1()
+{
   bot.sendMessage("Pulsante 1 premuto!");
   digitalWrite(pump_pin, !digitalRead(pump_pin));
-  isIrrigating = false; 
+  isIrrigating = false;
 }
 
-void handleButton2() {
+void handleButton2()
+{
   bot.sendMessage("Pulsante 2 premuto!");
 }
-
 
 void handleIrrigazione()
 {
 
-  if(irrigationDuration == 0) isIrrigating = false;
+  if (irrigationDuration == 0)
+    isIrrigating = false;
   if (isIrrigating)
   { // Avvia l'irrigazione solo se non è già in corso
     bot.sendMessage("Irrigazione Iniziata");
     irrigationStartTime = millis(); // Memorizza il tempo di inizio
-    //isIrrigating = true;            // Imposta lo stato di irrigazione a vero
+    // isIrrigating = true;            // Imposta lo stato di irrigazione a vero
     digitalWrite(pump_pin, HIGH);
   }
-  else if (isIrrigating && (millis() - irrigationStartTime >= irrigationDuration)) {
+  else if (isIrrigating && (millis() - irrigationStartTime >= irrigationDuration))
+  {
     bot.sendMessage("Irrigazione Finita");
     isIrrigating = false; // Imposta lo stato di irrigazione a falso
     digitalWrite(pump_pin, LOW);
   }
-  else {
-
+  else
+  {
   }
 }
 
@@ -326,13 +375,11 @@ void setup()
   // Configura i pin dei pulsanti
   butt1.attachClick(handleButton1);
   butt2.attachClick(handleButton2);
-  humidity_sens.attachClick([](){
-    bot.sendMessage("Pulsante 3 premuto!");
-  });
+  humidity_sens.attachClick([]()
+                            { bot.sendMessage("Pulsante 3 premuto!"); });
 
-  pinMode(pump_pin,OUTPUT);
+  pinMode(pump_pin, OUTPUT);
   digitalWrite(pump_pin, LOW);
-
 }
 
 void loop()
@@ -348,8 +395,4 @@ void loop()
   humidity_sens.tick();
 
   handleIrrigazione();
-
-
 }
-
-
