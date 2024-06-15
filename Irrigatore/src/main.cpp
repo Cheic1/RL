@@ -261,7 +261,8 @@ void newMsg(FB_msg &msg) {
 
 void handleButton1() {
   bot.sendMessage("Pulsante 1 premuto!");
-  isIrrigating = true; 
+  digitalWrite(pump_pin, !digitalRead(pump_pin));
+  isIrrigating = false; 
 }
 
 void handleButton2() {
