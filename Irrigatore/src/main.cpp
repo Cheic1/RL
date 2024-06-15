@@ -305,11 +305,14 @@ void newMsg(FB_msg &msg)
   }
 }
 
+bool Stato = false;
 void handleButton1()
 {
   bot.sendMessage("Pulsante 1 premuto!");
-  digitalWrite(pump_pin, !digitalRead(pump_pin));
+  digitalWrite(pump_pin, Stato);
+  delay(100);
   isIrrigating = false;
+  Stato = !Stato;
 }
 
 void handleButton2()
