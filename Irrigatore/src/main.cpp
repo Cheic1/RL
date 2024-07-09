@@ -43,7 +43,9 @@ String lastMenu = "";
 int debugMode = 1; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 
 // Token del bot di Telegram
-const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g";
+const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; //Cheicbot
+const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; //Emmisbot
+
 
 enum PinConfigStep
 {
@@ -73,6 +75,21 @@ void debug(String message)
     bot.sendMessage(message);
   }
 }
+
+
+void handleError(String errorMessage, bool isCritical = false) {
+    String fullMessage = "ERRORE: " + errorMessage;
+    debug(fullMessage);
+    
+    if (isCritical) {
+        bot.sendMessage("ERRORE CRITICO: " + errorMessage + ". Il sistema verrà riavviato.");
+        delay(5000);  // Attendi 5 secondi prima del riavvio
+        ESP.restart();
+    } else {
+        bot.sendMessage("ERRORE: " + errorMessage);
+    }
+}
+
 
 void resetEEPROM()
 {
@@ -189,6 +206,45 @@ void configurePins()
   }
 }
 
+void handleGitHubUpdate(String gitHubUrl)
+{
+  bot.sendMessage("Inizio processo di aggiornamento da GitHub...");
+
+  // Verifica che l'URL sia di GitHub
+  if (!gitHubUrl.startsWith("https://github.com/"))
+  {
+    handleError("URL non valido. Deve essere un link GitHub.");
+    return;
+  }
+
+  // Converti l'URL GitHub in un URL raw
+  String rawUrl = gitHubUrl;
+  rawUrl.replace("https://github.com/", "https://raw.githubusercontent.com/");
+  rawUrl.replace("/blob/", "/");
+
+  bot.sendMessage("Scaricamento del firmware da: " + rawUrl);
+
+  WiFiClientSecure client;
+  client.setInsecure(); // Nota: questo disabilita la verifica SSL. Usare con cautela.
+
+  t_httpUpdate_return ret = ESPhttpUpdate.update(client, rawUrl);
+
+  switch (ret)
+  {
+  case HTTP_UPDATE_FAILED:
+    handleError("Aggiornamento fallito: " + String(ESPhttpUpdate.getLastErrorString().c_str()));
+    break;
+  case HTTP_UPDATE_NO_UPDATES:
+    bot.sendMessage("Nessun aggiornamento disponibile.");
+    break;
+  case HTTP_UPDATE_OK:
+    bot.sendMessage("Aggiornamento completato con successo! Il dispositivo si riavvierà.");
+    delay(1000);
+    ESP.restart();
+    break;
+  }
+}
+
 void handleMenu(int menuNum, const char *answers, const char *callbacks)
 {
   String menu = "Answer " + String(menuNum) + ".1 \t Answer " + String(menuNum) + ".2 \t Answer " + String(menuNum) + ".3 \n Back";
@@ -282,49 +338,10 @@ void newMsg(FB_msg &msg)
     }
   }
 
+  // Nella funzione newMsg o dove gestisci i comandi del bot:
   if (msg.text.startsWith("https://github.com/"))
   {
-    bot.sendMessage("Verifica della data di caricamento del firmware...");
-
-    String firmwareURL = msg.text;
-    HTTPClient http;
-    WiFiClient client1;
-    // Invia una richiesta HEAD per ottenere le informazioni dell'intestazione
-    http.begin(client1, firmwareURL);
-    int httpCode = http.sendRequest("HEAD");
-
-    if (httpCode == HTTP_CODE_OK)
-    {
-      // Ottieni la data di caricamento dall'intestazione
-      String lastModified = http.header("Last-Modified");
-      bot.sendMessage("Data di caricamento del firmware: " + lastModified);
-
-      bot.sendMessage("Download e aggiornamento del firmware in corso...");
-
-      // Termina la connessione HTTPClient e utilizza la connessione di ESPhttpUpdate
-      http.end();
-
-      
-      t_httpUpdate_return ret = ESPhttpUpdate.update(client1, firmwareURL);
-
-      switch (ret)
-      {
-      case HTTP_UPDATE_FAILED:
-        bot.sendMessage("Aggiornamento fallito: " + String(ESPhttpUpdate.getLastErrorString().c_str()));
-        break;
-      case HTTP_UPDATE_NO_UPDATES:
-        bot.sendMessage("Nessun aggiornamento disponibile.");
-        break;
-      case HTTP_UPDATE_OK:
-        bot.sendMessage("Aggiornamento completato con successo!");
-        break;
-      }
-    }
-    else
-    {
-      bot.sendMessage("Impossibile ottenere la data di caricamento del firmware. Codice errore: " + String(httpCode));
-      http.end();
-    }
+    handleGitHubUpdate(msg.text);
   }
 }
 int Stato = 1;
