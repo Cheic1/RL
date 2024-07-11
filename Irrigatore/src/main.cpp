@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.6"
+#define APP_VERSION "0.0.7"
 
 
 time_t now = time(nullptr);
