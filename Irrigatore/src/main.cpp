@@ -6,6 +6,7 @@
 #include <OneButton.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
+#include <LittleFS.h>
 // Variabile di debug
 int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 int Stato = 1;
@@ -109,83 +110,72 @@ void resetEEPROM()
     debug("EEPROM resettata con successo.");
 }
 
-void saveConfig()
-{
-    EEPROM.begin(512);
+void saveConfig() {
+  StaticJsonDocument<512> doc;
 
-    // Leggi la configurazione attuale dalla EEPROM
-    String currentConfig;
-    for (int i = 0; i < 512; i++)
-    {
-        currentConfig += char(EEPROM.read(i));
-    }
+  for (int i = 0; i <= pinConfigCount; i++) {
+    JsonObject pin = doc.createNestedObject();
+    pin["pin"] = pinConfigs[i].pin;
+    pin["name"] = pinConfigs[i].name;
+    pin["type"] = pinConfigs[i].type;
+  }
+  doc["debugMode"] = debugMode;
+  doc["irrigationDurationConfig"] = irrigationDurationConfig;
+  doc["irrigationStartHour"] = irrigationStartHour;
+  doc["irrigationStartMinute"] = irrigationStartMinute;
+  doc["scheduledIrrigation"] = scheduledIrrigation;
 
-    // Deserializza la configurazione attuale in un documento JSON
-    StaticJsonDocument<512> doc;
-    DeserializationError error = deserializeJson(doc, currentConfig);
-    if (error)
-    {
-        debug("Errore nella deserializzazione della configurazione attuale: " + String(error.c_str()));
-        return;
-    }
+  File configFile = LittleFS.open("/config.json", "w");
+  if (!configFile) {
+    debug("Failed to open config file for writing");
+    return;
+  }
 
-    // Aggiungi la nuova configurazione al documento JSON esistente
-    for (int i = 0; i <= pinConfigCount; i++)
-    {
-        JsonObject pin = doc.createNestedObject();
-        pin["pin"] = pinConfigs[i].pin;
-        pin["name"] = pinConfigs[i].name;
-        pin["type"] = pinConfigs[i].type;
-    }
-    doc["debugMode"] = debugMode;
-
-    // Serializza il documento JSON in una stringa JSON
-    String json;
-    serializeJson(doc, json);
-
-    // Controlla la lunghezza della stringa JSON
-    if (json.length() > 512)
-    {
-        debug("Errore: Configurazione supera la capacità di EEPROM");
-        return;
-    }
-
-    // Salva la nuova configurazione nella EEPROM
-    for (int i = 0; i < json.length(); i++)
-    {
-        EEPROM.write(i, json[i]);
-    }
-    EEPROM.commit();
+  serializeJson(doc, configFile);
+  configFile.close();
+  debug("Configuration saved successfully");
 }
 
-void loadConfig()
-{
-    EEPROM.begin(512);
-    String json;
-    for (int i = 0; i < 512; i++)
-    {
-        json += char(EEPROM.read(i));
-    }
-    debug(json);
-    StaticJsonDocument<512> doc;
-    DeserializationError error = deserializeJson(doc, json);
-    if (error)
-    {
-        debug("Errore nella deserializzazione: " + String(error.c_str()));
-        return;
-    }
-    pinConfigCount = doc.size() - 1; // Assumendo che l'ultima voce sia debugMode
-    debug("Numero pin configurati : " + String(pinConfigCount));
-    for (int i = 0; i <= pinConfigCount; i++)
-    {
-        JsonObject pin = doc[i];
-        pinConfigs[i].pin = pin["pin"];
-        pinConfigs[i].name = pin["name"].as<String>();
-        pinConfigs[i].type = pin["type"].as<String>();
-        debug("Pin configurato come : " + String(pin));
-    }
-    debugMode = doc["debugMode"];
-    debug("Debug mode : " + String(debugMode));
+void loadConfig() {
+  if (!LittleFS.begin()) {
+    debug("Failed to mount file system");
+    return;
+  }
+
+  if (!LittleFS.exists("/config.json")) {
+    debug("Config file not found");
+    return;
+  }
+
+  File configFile = LittleFS.open("/config.json", "r");
+  if (!configFile) {
+    debug("Failed to open config file");
+    return;
+  }
+
+  StaticJsonDocument<512> doc;
+  DeserializationError error = deserializeJson(doc, configFile);
+  if (error) {
+    debug("Failed to parse config file");
+    return;
+  }
+
+  pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
+  for (int i = 0; i < pinConfigCount; i++) {
+    JsonObject pin = doc[i];
+    pinConfigs[i].pin = pin["pin"];
+    pinConfigs[i].name = pin["name"].as<String>();
+    pinConfigs[i].type = pin["type"].as<String>();
+  }
+  
+  debugMode = doc["debugMode"];
+  irrigationDurationConfig = doc["irrigationDurationConfig"];
+  irrigationStartHour = doc["irrigationStartHour"];
+  irrigationStartMinute = doc["irrigationStartMinute"];
+  scheduledIrrigation = doc["scheduledIrrigation"];
+
+  configFile.close();
+  debug("Configuration loaded successfully");
 }
 
 void configurePins()
@@ -352,6 +342,7 @@ void handleConfigCallback(FB_msg &msg)
     {
         bot.sendMessage("Inserisci la durata dell'irrigazione in secondi:");
         currentPinStep = CONFIG_PIN; // Usa questo enum per gestire la prossima risposta
+        
     }
     else if (msg.data == "set_time")
     {
