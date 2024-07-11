@@ -9,7 +9,7 @@
 // Variabile di debug
 int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 int Stato = 1;
-const int pump_pin = D3;
+const int pump_pin = D3; 
 
 // Credenziali Wi-Fi
 const char *ssid = "Telecom-15744621";
