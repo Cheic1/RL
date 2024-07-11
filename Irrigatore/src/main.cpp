@@ -444,13 +444,13 @@ void setup()
     FB_Time t(bot.getUnix(), 2);
     debug("Ora attuale: " + t.timeString());
     // Carica la configurazione dei PIN dalla EEPROM
-    // loadConfig();
+    loadConfig();
     // configurePins();
 
     // Configura i pin dei pulsanti
     butt1.attachClick(handleButton1);
     butt2.attachClick(handleButton2);
-    humidity_sens.attachClick([]()
+    humidity_sens.attachLongPressStart([]()
                               { bot.sendMessage("Pulsante 3 premuto!"); });
 
     // Carica la configurazione dalla EEPROM
@@ -474,4 +474,6 @@ void loop()
 
     //handle irrigazione
     handleIrrigazione();
+    
+    
 }
