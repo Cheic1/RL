@@ -5,5 +5,5 @@
 .vscode/ipch
 
 # Eccezioni per includere file specifici
-.pio
+.pio/*
 !firmware.bin
