@@ -439,6 +439,14 @@ void newMsg(FB_msg &msg)
     }
 }
 
+void handleTime()
+{
+    if (millis() - now > 10000)
+    {        
+        
+        // debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+    }
+}
 void setup()
 {
     // Inizializzazione della seriale
@@ -459,7 +467,11 @@ void setup()
     bot.sendMessage("Irrigatore inizializzato \n /menu : apri il menu setup\n");
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
+    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    currentTime = localtime(&now);
     debug("Ora attuale: " + t.timeString());
+    debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+
     // Carica la configurazione dei PIN dalla EEPROM
     loadConfig();
     // configurePins();
@@ -480,15 +492,6 @@ void setup()
     debug("Sistema avviato.");
 }
 
-void handleTime()
-{
-    if (millis() - now > 30000)
-    {
-        configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-        currentTime = localtime(&now);
-        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
-    }
-}
 void loop()
 {
     // Verifica nuovi messaggi per il bot di Telegram
@@ -501,7 +504,7 @@ void loop()
     //handle irrigazione
     handleIrrigazione();
     
-    handleTime();
+    // handleTime();
 
     
 }
