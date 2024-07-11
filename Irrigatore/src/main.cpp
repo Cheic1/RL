@@ -470,7 +470,7 @@ void handleTime()
     {
         configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
         currentTime = localtime(&now);
-        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min));
+        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
     }
 }
 void loop()
