@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.5"
+#define APP_VERSION "0.0.6"
 
 
 time_t now = time(nullptr);
@@ -467,6 +467,7 @@ void setup()
     startUnix = bot.getUnix(); // запомнили
     // Invia un messaggio per indicare l'inizializzazione dell'irrigatore
     bot.sendMessage("Irrigatore inizializzato \n /menu : apri il menu setup\n");
+    debug("Version :" + String(APP_VERSION));
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
     configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
