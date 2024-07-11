@@ -319,7 +319,7 @@ void handleIrrigazione()
         // time_t now = time(nullptr);
         // struct tm *currentTime = localtime(&now);
         FB_Time t(bot.getUnix(), 2);
-        if (t.hour == irrigationStartHour && t.minute == irrigationStartMinute && !isIrrigating)
+        if (t.hour == irrigationStartHour && t.minute == irrigationStartMinute && t.second == 00 && !isIrrigating)
         {
             bot.sendMessage("Irrigazione programmata Iniziata");
             irrigationStartTime = millis();
