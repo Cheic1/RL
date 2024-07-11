@@ -329,7 +329,7 @@ void handleIrrigazione()
     }
 }
 // Aggiungi queste funzioni per gestire il menu inline
-void showConfigMenu(FB_msg &msg, int page = 0)
+void showConfigMenu(FB_msg &msg, int page = 1)
 {
     if (page == 0)
     {
