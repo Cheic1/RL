@@ -381,11 +381,12 @@ void newMsg(FB_msg &msg)
 {
     FB_Time t(msg.unix, 2);
     if (msg.unix < startUnix)
-        return; // игнорировать сообщения
+        return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
     debug("Nuovo messaggio ricevuto: " + msg.toString());
 
-    if (msg.OTA)
-        bot.update();
+    if (msg.OTA)         bot.update();
+
+
     if (msg.text == "/menu" || msg.text == "/config")
     {
         showConfigMenu(msg);
