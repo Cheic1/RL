@@ -7,6 +7,10 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
+
+
+time_t now = time(nullptr);
+struct tm *currentTime = localtime(&now);
 // Variabile di debug
 int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 int Stato = 1;
@@ -462,11 +466,10 @@ void setup()
     // Debug
     debug("Sistema avviato.");
 }
-time_t now = time(nullptr);
-struct tm *currentTime = localtime(&now);
+
 void handleTime()
 {
-    if (millis() - now > 1000)
+    if (millis() - now > 30000)
     {
         configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
         currentTime = localtime(&now);
