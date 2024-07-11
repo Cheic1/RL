@@ -57,7 +57,8 @@ enum PinConfigStep
     CONFIG_PIN,
     CONFIG_NAME,
     CONFIG_TYPE,
-    CONFIG_CONFIRM
+    CONFIG_CONFIRM, 
+    Menu1
 };
 
 PinConfigStep currentPinStep = NONE;
@@ -288,16 +289,16 @@ void handleGitHubUpdate(FB_msg &msg)
     }
 }
 
-// void handleButton1()
-// {
-//     bot.sendMessage("Pulsante 1 premuto!");
-//     bot.sendMessage(String(digitalRead(pump_pin)) + " " + String(Stato));
-//     digitalWrite(pump_pin, Stato);
-//     delay(100);
-//     Stato = 1 - Stato;
-//     bot.sendMessage(String(digitalRead(pump_pin)) + " " + String(Stato));
-//     isIrrigating = false;
-// }
+void handleButton1()
+{
+    if (!isIrrigating)
+    {
+        bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
+        irrigationStartTime = millis();
+        isIrrigating = true;
+        digitalWrite(pump_pin, HIGH);
+    }
+}
 
 void handleButton2()
 {
@@ -366,16 +367,7 @@ void handleConfigCallback(FB_msg &msg)
 }
 
 
-void handleButton1()
-{
-    if (!isIrrigating)
-    {
-        bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
-        irrigationStartTime = millis();
-        isIrrigating = true;
-        digitalWrite(pump_pin, HIGH);
-    }
-}
+
 uint32_t startUnix; // храним время
 
 void newMsg(FB_msg &msg)
