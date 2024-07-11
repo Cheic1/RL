@@ -462,7 +462,17 @@ void setup()
     // Debug
     debug("Sistema avviato.");
 }
-
+time_t now = time(nullptr);
+struct tm *currentTime = localtime(&now);
+void handleTime()
+{
+    if (millis() - now > 1000)
+    {
+        configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+        currentTime = localtime(&now);
+        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min));
+    }
+}
 void loop()
 {
     // Verifica nuovi messaggi per il bot di Telegram
@@ -475,5 +485,7 @@ void loop()
     //handle irrigazione
     handleIrrigazione();
     
+    handleTime();
+
     
 }
