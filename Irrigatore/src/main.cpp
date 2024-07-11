@@ -8,6 +8,8 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
+#define APP_VERSION "0.0.5"
+
 
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
