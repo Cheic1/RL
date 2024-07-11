@@ -129,6 +129,18 @@ void saveConfig() {
   doc["irrigationStartMinute"] = irrigationStartMinute;
   doc["scheduledIrrigation"] = scheduledIrrigation;
 
+  // Verifica se il file esiste, se non esiste lo crea
+  if (!LittleFS.exists("/config.json")) {
+    debug("Config file does not exist, creating it");
+    File configFile = LittleFS.open("/config.json", "w");
+    if (!configFile) {
+      debug("Failed to create config file");
+      return;
+    }
+    configFile.close();
+  }
+
+  // Apre il file in modalità scrittura
   File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
     debug("Failed to open config file for writing");
@@ -138,8 +150,8 @@ void saveConfig() {
   serializeJson(doc, configFile);
   configFile.close();
   debug("Configuration saved successfully");
-}
 
+}
 void loadConfig() {
   if (!LittleFS.begin()) {
     debug("Failed to mount file system");
