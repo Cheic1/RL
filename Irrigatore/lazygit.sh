@@ -5,6 +5,8 @@
 # sduo ln -s ~/.platformio/penv/bin/pio /usr/local/bin/pio
 # sudo ln -s ~/.platformio/penv/bin/piodebuggdb /usr/local/bin/piodebuggdb
 # cd ..
+
+
 pio run --environment d1
 git add .
 git commit -a -m "$1"
