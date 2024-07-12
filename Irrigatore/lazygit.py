@@ -1,6 +1,8 @@
 import re
 import subprocess
 import sys
+import shutil
+import os
 
 
 VERSION_FILE = "src/main.cpp"
@@ -56,6 +58,9 @@ def run_command(command):
     return stdout.decode()
 
 def main():
+    if not os.path.exists('FW'):
+        os.makedirs('FW')
+
     new_version = increment_version()
 
     # Esegui pio run
@@ -66,16 +71,39 @@ def main():
     print("Aggiunta dei file modificati a git...")
     run_command("git add .")
 
+
+
+    # Cerca i file .bin, rinominali e copiali nella cartella /FW
+    print("Cercando e copiando i file .bin...")
+    for root, dirs, files in os.walk('.'):
+        if 'FW' in root:
+            continue
+        for file in files:
+            if file.endswith('.bin'):
+                old_path = os.path.join(root, file)
+                new_filename = f"{os.path.splitext(file)[0]}_{new_version}.bin"
+                new_path = os.path.join('FW', new_filename)
+                shutil.copy2(old_path, new_path)
+                print(f"Copiato {old_path} in {new_path}")
+    
+    # Trova l'ultimo file .bin copiato
+    last_bin_file = max(
+        [f for f in os.listdir('FW') if f.endswith('.bin')],
+        key=lambda x: os.path.getmtime(os.path.join('FW', x))
+    )
+    
+    
     # Esegui git commit
     commit_message = sys.argv[1] if len(sys.argv) > 1 else f"Aggiornamento versione a {new_version}"
     print(f"Commit dei cambiamenti: {commit_message}")
     run_command(f'git commit -a -m "{new_version} - {commit_message}"')
-
+    
     # Esegui git push
     print("Push dei cambiamenti al repository remoto...")
     run_command("git push")
-
+    
     print("Operazioni completate con successo.")
+    print(f"Ultimo file .bin copiato: {last_bin_file}")
 
 if __name__ == "__main__":
     main()
