@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.29"
+#define APP_VERSION "0.0.30"
 
 // void loadConfig();
 // void saveConfig();
@@ -442,7 +442,7 @@ void newMsg(FB_msg &msg)
     if (msg.unix < startUnix)
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
 
-    debug("Nuovo messaggio ricevuto: " + msg.toString());
+    debug( msg.toString());
     bot.sendMessage(msg.toString());
 
     delay(100);
@@ -507,7 +507,7 @@ void newMsg(FB_msg &msg)
         {
         case CONFIG_PIN:                                        // Imposta durata
             irrigationDurationConfig = msg.text.toInt() * 1000; // Converti in millisecondi
-            bot.sendMessage("Durata irrigazione impostata a " + String(irrigationDurationConfig / 1000) + " secondi");
+            debug("Durata irrigazione impostata a " + String(irrigationDurationConfig / 1000) + " secondi");
             currentPinStep = NONE;
             saveConfig();
             break;
@@ -519,18 +519,18 @@ void newMsg(FB_msg &msg)
             {
                 irrigationStartHour = hour;
                 irrigationStartMinute = minute;
-                bot.sendMessage("Ora di avvio irrigazione impostata alle " + String(hour) + ":" + String(minute));
+                debug("Ora di avvio irrigazione impostata alle " + String(hour) + ":" + String(minute));
                 saveConfig();
             }
             else
             {
-                bot.sendMessage("Formato ora non valido. Usa HH:MM");
+                debug("Formato ora non valido. Usa HH:MM");
             }
             currentPinStep = NONE;
         }
         break;
         default:
-            bot.sendMessage("Comando non riconosciuto. Usa /config per configurare l'irrigazione.");
+            debug("Comando non riconosciuto. Usa /config per configurare l'irrigazione.");
             break;
         }
     }
