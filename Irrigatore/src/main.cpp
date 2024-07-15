@@ -8,10 +8,13 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.19"
+#define APP_VERSION "0.0.20"
 
 
-void loadConfig();
+// void loadConfig();
+// void saveConfig();
+
+
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
 // Variabile di debug
@@ -202,18 +205,20 @@ void loadConfig()
         return;
     }
 
-    pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
-    for (int i = 0; i < pinConfigCount; i++)
-    {
-        JsonObject pin = doc[i];
-        pinConfigs[i].pin = pin["pin"];
-        pinConfigs[i].name = pin["name"].as<String>();
-        pinConfigs[i].type = pin["type"].as<String>();
-    }
+    // pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
+    // for (int i = 0; i < pinConfigCount; i++)
+    // {
+    //     JsonObject pin = doc[i];
+    //     pinConfigs[i].pin = pin["pin"];
+    //     pinConfigs[i].name = pin["name"].as<String>();
+    //     pinConfigs[i].type = pin["type"].as<String>();
+    // }
 
     debugMode = doc["debugMode"];
     debug("debug mode: " + String(debugMode));
     irrigationDurationConfig = doc["irrigationDurationConfig"];
+    if(irrigationDurationConfig == 0) irrigationDurationConfig = 30 * 1000;
+    debug("irrigation duration: " + String(irrigationDurationConfig) + "ms");
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
     scheduledIrrigation = doc["scheduledIrrigation"];
@@ -454,6 +459,11 @@ void newMsg(FB_msg &msg)
     else if (msg.text == "/time"){
          debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
     }
+    else if (msg.text == "/save")
+    {
+        saveConfig();
+    }
+    
     else if (msg.text == "/reset")
     {
         resetEEPROM();
