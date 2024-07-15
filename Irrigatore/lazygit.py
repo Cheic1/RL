@@ -65,7 +65,7 @@ def main():
 
     # Esegui pio run
     print("Esecuzione di 'pio run --environment d1'...")
-    run_command("pio run --environment d1")
+    # run_command("pio run --environment d1")
 
 
 

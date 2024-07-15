@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.15"
+#define APP_VERSION "0.0.16"
 void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -336,7 +336,7 @@ void handleIrrigazione()
 {
     if (isIrrigating && (millis() - irrigationStartTime >= irrigationDurationConfig))
     {
-        bot.sendMessage("Irrigazione Finita");
+        bot.sendMessage("Irrigazione Finita dopo " + String(millis() - irrigationStartTime));
         isIrrigating = false;
         digitalWrite(pump_pin, LOW);
     }
@@ -428,6 +428,17 @@ void newMsg(FB_msg &msg)
             digitalWrite(pump_pin, HIGH);
         }
 
+    }
+    else if( msg.text == "/disattiva"){
+        if (isIrrigating)
+        {
+            bot.sendMessage("Irrigazione Finita tramite /disattiva");
+            isIrrigating = false;
+            digitalWrite(pump_pin, LOW);
+        }
+    }
+    else if (msg.text == "/time"){
+         debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
     }
     else if (msg.text == "/reset")
     {
@@ -521,7 +532,7 @@ void setup()
     debug("Version : " + String(APP_VERSION));
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
-    configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    configTime(2 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     // Attendiamo un po' per assicurarci che il tempo sia stato sincronizzato
     while (time(nullptr) < 1000000000)
     {
