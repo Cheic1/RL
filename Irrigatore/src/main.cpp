@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.11"
+#define APP_VERSION "0.0.12"
 void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -394,7 +394,7 @@ void handleConfigCallback(FB_msg &msg)
     else if (msg.data == "toggle_manual"){
         if (!isIrrigating)
         {
-            bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
+            bot.sendMessage("Irrigazione Iniziata tramite toggle_manuale");
             irrigationStartTime = millis();
             isIrrigating = true;
             digitalWrite(pump_pin, HIGH);
@@ -409,6 +409,7 @@ void newMsg(FB_msg &msg)
     FB_Time t(msg.unix, 2);
     if (msg.unix < startUnix)
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
+
     debug("Nuovo messaggio ricevuto: " + msg.toString());
 
     if (msg.OTA)
@@ -433,7 +434,7 @@ void newMsg(FB_msg &msg)
     else if (msg.text != "/attiva"){
         if (!isIrrigating)
         {
-            bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
+            bot.sendMessage("Irrigazione Iniziata tramite /attiva");
             irrigationStartTime = millis();
             isIrrigating = true;
             digitalWrite(pump_pin, HIGH);
