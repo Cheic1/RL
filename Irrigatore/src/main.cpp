@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.26"
+#define APP_VERSION "0.0.27"
 
 // void loadConfig();
 // void saveConfig();
@@ -26,7 +26,7 @@ const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 #define CHAT_ID "217950359"
 
 // Array di chat ID
-const String chatIds[] = {"217950359", "000"};
+const String chatIds[] = {"217950359", "851696190"};
 const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
 
 unsigned long irrigationStartTime = 0;        // Variabile per memorizzare l'ora di inizio dell'irrigazione
