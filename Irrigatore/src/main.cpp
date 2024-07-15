@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.24"
+#define APP_VERSION "0.0.25"
 
 
 // void loadConfig();
@@ -172,11 +172,13 @@ void saveConfig()
 }
 void loadConfig()
 {
+    delay(100);
     if (!LittleFS.begin())
     {
         debug("Failed to mount file system");
         return;
     }
+    delay(100);
     debug("Mounting file system...");
 
     if (!LittleFS.exists("/config.json"))
@@ -186,6 +188,7 @@ void loadConfig()
     }
     else {
         debug("Config file found");
+        delay(100);
     }
 
     File configFile = LittleFS.open("/config.json", "r");
@@ -204,7 +207,10 @@ void loadConfig()
     {
         debug("Failed to parse config file");
         return;
+        
     }
+    debug("Arriva");
+    
 
     // pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
     // for (int i = 0; i < pinConfigCount; i++)
