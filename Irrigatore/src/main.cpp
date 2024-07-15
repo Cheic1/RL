@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.14"
+#define APP_VERSION "0.0.15"
 void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -156,7 +156,7 @@ void saveConfig()
     serializeJson(doc, configFile);
     configFile.close();
     debug("Configuration saved successfully");
-    loadConfig();
+    // loadConfig();
 }
 void loadConfig()
 {
@@ -553,6 +553,12 @@ void setup()
 
     // Debug
     debug("Sistema avviato.");
+    debug("debug mode: " + String(debugMode) + "\n " +
+    "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+    "irrigation start hour: " + String(irrigationStartHour) + "\n"
+    "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
+    "scheduledIrrigation: " + String(scheduledIrrigation)
+    );
 }
 
 void loop()

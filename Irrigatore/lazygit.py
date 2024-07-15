@@ -94,7 +94,7 @@ def main():
     run_command("git add .")
 
     # Esegui git commit
-    input("git commit")
+    input("git commit, pressa a key to commit and continue")
     commit_message = sys.argv[1] if len(sys.argv) > 1 else f"Aggiornamento versione a {new_version}"
     print(f"Commit dei cambiamenti: {commit_message}")
     run_command(f'git commit -a -m "{new_version} - {commit_message}"')
