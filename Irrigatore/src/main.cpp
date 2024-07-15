@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.18"
+#define APP_VERSION "0.0.19"
 
 
 void loadConfig();
@@ -30,7 +30,7 @@ const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
 
 unsigned long irrigationStartTime = 0;       // Variabile per memorizzare l'ora di inizio dell'irrigazione
 bool isIrrigating = false;                   // Stato dell'irrigazione
-unsigned long irrigationDuration = 5 * 1000; // Durata dell'irrigazione
+unsigned long irrigationDuration = 30 * 1000; // Durata dell'irrigazione
 
 unsigned long irrigationDurationConfig = 5000; // Durata di irrigazione configurata (in millisecondi)
 unsigned long irrigationStartHour = 12;        // Ora di avvio dell'irrigazione (0-23)
@@ -189,6 +189,9 @@ void loadConfig()
     {
         debug("Failed to open config file");
         return;
+    }else
+    {
+        debug("Reading config file");
     }
 
     StaticJsonDocument<512> doc;
@@ -209,6 +212,7 @@ void loadConfig()
     }
 
     debugMode = doc["debugMode"];
+    debug("debug mode: " + String(debugMode));
     irrigationDurationConfig = doc["irrigationDurationConfig"];
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
