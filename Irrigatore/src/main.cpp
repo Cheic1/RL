@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.27"
+#define APP_VERSION "0.0.29"
 
 // void loadConfig();
 // void saveConfig();
@@ -386,15 +386,21 @@ void showConfigMenu(FB_msg &msg, int page = 1)
 {
     if (page == 0)
     {
-        bot.inlineMenuCallback("Configurazione Irrigazione",
-                               "Menu-config\tReset\nAttiva/Disattiva Programmazione",
-                               "/menu,/reset,toggle_schedule");
+        for (int i = 0; i < numChats; i++)
+        {
+            bot.inlineMenuCallback("Configurazione Irrigazione",
+                                   "Menu-config\tReset\nAttiva/Disattiva Programmazione",
+                                   "/menu,/reset,toggle_schedule", chatIds[i]);
+        }
     }
     else if (page == 1)
     {
-        bot.inlineMenuCallback("Configurazione Irrigazione",
-                               "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
-                               "set_duration,set_time,toggle_manual,toggle_schedule");
+        for (int i = 0; i < numChats; i++)
+        {
+            bot.inlineMenuCallback("Configurazione Irrigazione",
+                                   "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
+                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i]);
+        }
     }
 }
 
@@ -447,6 +453,15 @@ void newMsg(FB_msg &msg)
     {
         showConfigMenu(msg);
     }
+    else if (msg.text == "/time")
+    {
+        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+    }
+    else if (msg.text == "/save")
+    {
+        debug("Salvataggio configurazione... /save");
+        saveConfig();
+    }
     else if (msg.text == "/attiva")
     {
         if (!isIrrigating)
@@ -466,15 +481,7 @@ void newMsg(FB_msg &msg)
             digitalWrite(pump_pin, LOW);
         }
     }
-    else if (msg.text == "/time")
-    {
-        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
-    }
-    else if (msg.text == "/save")
-    {
-        debug("Salvataggio configurazione... /save");
-        saveConfig();
-    }
+
     else if (msg.text == "/load")
     {
         debug("load.. /load");
