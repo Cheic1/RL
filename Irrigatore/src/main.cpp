@@ -8,8 +8,8 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.9"
-
+#define APP_VERSION "0.0.10"
+void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
 // Variabile di debug
@@ -156,6 +156,7 @@ void saveConfig()
     serializeJson(doc, configFile);
     configFile.close();
     debug("Configuration saved successfully");
+    loadConfig();
 }
 void loadConfig()
 {
@@ -169,6 +170,9 @@ void loadConfig()
     {
         debug("Config file not found");
         return;
+    }
+    else {
+        debug("Config file found");
     }
 
     File configFile = LittleFS.open("/config.json", "r");
@@ -200,9 +204,15 @@ void loadConfig()
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
     scheduledIrrigation = doc["scheduledIrrigation"];
-
+   
     configFile.close();
     debug("Configuration loaded successfully");
+    debug("debug mode: " + String(debugMode) + "\n " +
+    "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+    "irrigation start hour: " + String(irrigationStartHour) + "\n"
+    "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
+    "scheduledIrrigation: " + String(scheduledIrrigation)
+    );
 }
 
 void configurePins()
@@ -336,7 +346,8 @@ void handleIrrigazione()
         // time_t now = time(nullptr);
         // struct tm *currentTime = localtime(&now);
         FB_Time t(bot.getUnix(), 2);
-        if (t.hour == irrigationStartHour && t.minute == irrigationStartMinute && t.second == 00 && !isIrrigating)
+
+        if(currentTime->tm_hour == irrigationStartHour && currentTime->tm_min == irrigationStartMinute && currentTime->tm_sec == 00 && !isIrrigating)
         {
             bot.sendMessage("Irrigazione programmata Iniziata");
             irrigationStartTime = millis();
@@ -357,8 +368,8 @@ void showConfigMenu(FB_msg &msg, int page = 1)
     else if (page == 1)
     {
         bot.inlineMenuCallback("Configurazione Irrigazione",
-                               "Imposta Durata\tImposta Ora\nAttiva/Disattiva Programmazione",
-                               "set_duration,set_time,toggle_schedule");
+                               "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
+                               "set_duration,set_time,toggle_manual,toggle_schedule");
     }
 }
 
@@ -379,6 +390,15 @@ void handleConfigCallback(FB_msg &msg)
         scheduledIrrigation = !scheduledIrrigation;
         bot.sendMessage(scheduledIrrigation ? "Irrigazione programmata attivata" : "Irrigazione programmata disattivata");
         saveConfig();
+    }
+    else if (msg.data == "toggle_manual"){
+        if (!isIrrigating)
+        {
+            bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
+            irrigationStartTime = millis();
+            isIrrigating = true;
+            digitalWrite(pump_pin, HIGH);
+        }
     }
 }
 
@@ -409,6 +429,15 @@ void newMsg(FB_msg &msg)
     else if (msg.data != "")
     {
         handleConfigCallback(msg);
+    }
+    else if (msg.text != "/attiva"){
+        if (!isIrrigating)
+        {
+            bot.sendMessage("Irrigazione Iniziata tramite pulsante 1");
+            irrigationStartTime = millis();
+            isIrrigating = true;
+            digitalWrite(pump_pin, HIGH);
+        }
     }
     else
     {
@@ -466,7 +495,7 @@ void setup()
     WiFi.mode(WIFI_STA);
 
     // Configura WiFiManager
-    wm.setConfigPortalBlocking(false);
+    // wm.setConfigPortalBlocking(false);
     wm.setConfigPortalTimeout(60);
     if (wm.autoConnect("Irrigatore"))
     {
@@ -491,13 +520,22 @@ void setup()
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
     configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    // Attendiamo un po' per assicurarci che il tempo sia stato sincronizzato
+    while (time(nullptr) < 1000000000)
+    {
+        delay(100);
+    }
+
+    time_t now;
+    time(&now);
     currentTime = localtime(&now);
+
     debug("Ora attuale: " + t.timeString());
     debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
 
     // Carica la configurazione dei PIN dalla EEPROM
     loadConfig();
-    // configurePins();
+    configurePins();
 
     // Configura i pin dei pulsanti
     butt1.attachClick(handleButton1);
