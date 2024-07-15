@@ -8,7 +8,9 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.16"
+#define APP_VERSION "0.0.18"
+
+
 void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -21,6 +23,10 @@ const int pump_pin = D3;
 const char *ssid = "Telecom-15744621";
 const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 #define CHAT_ID "217950359"
+
+// Array di chat ID
+const String chatIds[] = {"217950359", "000"};
+const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
 
 unsigned long irrigationStartTime = 0;       // Variabile per memorizzare l'ora di inizio dell'irrigazione
 bool isIrrigating = false;                   // Stato dell'irrigazione
@@ -83,7 +89,10 @@ void debug(String message)
     }
     if (debugMode == 2 || debugMode == 3)
     {
-        bot.sendMessage(message);
+        for (int i = 0; i < numChats; i++)
+        {
+            bot.sendMessage(message, chatIds[i]);
+        }
     }
 }
 
@@ -207,12 +216,13 @@ void loadConfig()
    
     configFile.close();
     debug("Configuration loaded successfully");
-    debug("debug mode: " + String(debugMode) + "\n " +
-    "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
-    "irrigation start hour: " + String(irrigationStartHour) + "\n"
-    "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
-    "scheduledIrrigation: " + String(scheduledIrrigation)
-    );
+    debug("debug mode: " + String(debugMode));
+    // debug("debug mode: " + String(debugMode) + "\n " +
+    // "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+    // "irrigation start hour: " + String(irrigationStartHour) + "\n"
+    // "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
+    // "scheduledIrrigation: " + String(scheduledIrrigation)
+    // );
 }
 
 void configurePins()
@@ -548,6 +558,7 @@ void setup()
 
     // Carica la configurazione dei PIN dalla EEPROM
     loadConfig();
+    saveConfig();
     configurePins();
 
     // Configura i pin dei pulsanti

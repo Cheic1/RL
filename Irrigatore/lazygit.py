@@ -3,6 +3,7 @@ import subprocess
 import sys
 import shutil
 import os
+import time
 
 
 VERSION_FILE = "src/main.cpp"
@@ -45,7 +46,6 @@ def increment_version():
         file.write(new_content)
 
     print(f"Versione aggiornata da {current_version} a {new_version}")
-    print(f"Versione aggiornata da {current_version} a {new_version}")
     return new_version
 
 def run_command(command):
@@ -65,8 +65,8 @@ def main():
 
     # Esegui pio run
     print("Esecuzione di 'pio run --environment d1'...")
-    # run_command("pio run --environment d1")
-
+    run_command("pio run --environment d1")
+    time.sleep(1);
 
 
     # Cerca i file .bin, rinominali e copiali nella cartella /FW
@@ -92,9 +92,10 @@ def main():
     # Esegui git add
     print("Aggiunta dei file modificati a git...")
     run_command("git add .")
+    time.sleep(1);
 
     # Esegui git commit
-    input("git commit, pressa a key to commit and continue")
+    # input("git commit, pressa a key to commit and continue")
     commit_message = sys.argv[1] if len(sys.argv) > 1 else f"Aggiornamento versione a {new_version}"
     print(f"Commit dei cambiamenti: {commit_message}")
     run_command(f'git commit -a -m "{new_version} - {commit_message}"')
@@ -103,6 +104,7 @@ def main():
     
     print("Push dei cambiamenti al repository remoto...")
     run_command("git push")
+    time.sleep(1);
     
     print("Operazioni completate con successo.")
     print(f"Ultimo file .bin copiato: {last_bin_file}")
