@@ -67,10 +67,6 @@ def main():
     print("Esecuzione di 'pio run --environment d1'...")
     run_command("pio run --environment d1")
 
-    # Esegui git add
-    print("Aggiunta dei file modificati a git...")
-    run_command("git add .")
-
 
 
     # Cerca i file .bin, rinominali e copiali nella cartella /FW
@@ -93,12 +89,18 @@ def main():
     )
     
     
+    # Esegui git add
+    print("Aggiunta dei file modificati a git...")
+    run_command("git add .")
+
     # Esegui git commit
+    input("git commit")
     commit_message = sys.argv[1] if len(sys.argv) > 1 else f"Aggiornamento versione a {new_version}"
     print(f"Commit dei cambiamenti: {commit_message}")
     run_command(f'git commit -a -m "{new_version} - {commit_message}"')
     
     # Esegui git push
+    
     print("Push dei cambiamenti al repository remoto...")
     run_command("git push")
     

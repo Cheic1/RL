@@ -8,15 +8,14 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.8"
-
+#define APP_VERSION "0.0.9"
 
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
 // Variabile di debug
 int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 int Stato = 1;
-const int pump_pin = D3; 
+const int pump_pin = D3;
 
 // Credenziali Wi-Fi
 const char *ssid = "Telecom-15744621";
@@ -64,7 +63,7 @@ enum PinConfigStep
     CONFIG_PIN,
     CONFIG_NAME,
     CONFIG_TYPE,
-    CONFIG_CONFIRM, 
+    CONFIG_CONFIRM,
     Menu1
 };
 
@@ -116,84 +115,94 @@ void resetEEPROM()
     debug("EEPROM resettata con successo.");
 }
 
-void saveConfig() {
-  StaticJsonDocument<512> doc;
+void saveConfig()
+{
+    StaticJsonDocument<512> doc;
 
-  for (int i = 0; i <= pinConfigCount; i++) {
-    JsonObject pin = doc.createNestedObject();
-    pin["pin"] = pinConfigs[i].pin;
-    pin["name"] = pinConfigs[i].name;
-    pin["type"] = pinConfigs[i].type;
-  }
-  doc["debugMode"] = debugMode;
-  doc["irrigationDurationConfig"] = irrigationDurationConfig;
-  doc["irrigationStartHour"] = irrigationStartHour;
-  doc["irrigationStartMinute"] = irrigationStartMinute;
-  doc["scheduledIrrigation"] = scheduledIrrigation;
-
-  // Verifica se il file esiste, se non esiste lo crea
-  if (!LittleFS.exists("/config.json")) {
-    debug("Config file does not exist, creating it");
-    File configFile = LittleFS.open("/config.json", "w");
-    if (!configFile) {
-      debug("Failed to create config file");
-      return;
+    for (int i = 0; i <= pinConfigCount; i++)
+    {
+        JsonObject pin = doc.createNestedObject();
+        pin["pin"] = pinConfigs[i].pin;
+        pin["name"] = pinConfigs[i].name;
+        pin["type"] = pinConfigs[i].type;
     }
+    doc["debugMode"] = debugMode;
+    doc["irrigationDurationConfig"] = irrigationDurationConfig;
+    doc["irrigationStartHour"] = irrigationStartHour;
+    doc["irrigationStartMinute"] = irrigationStartMinute;
+    doc["scheduledIrrigation"] = scheduledIrrigation;
+
+    // Verifica se il file esiste, se non esiste lo crea
+    if (!LittleFS.exists("/config.json"))
+    {
+        debug("Config file does not exist, creating it");
+        File configFile = LittleFS.open("/config.json", "w");
+        if (!configFile)
+        {
+            debug("Failed to create config file");
+            return;
+        }
+        configFile.close();
+    }
+
+    // Apre il file in modalità scrittura
+    File configFile = LittleFS.open("/config.json", "w");
+    if (!configFile)
+    {
+        debug("Failed to open config file for writing");
+        return;
+    }
+
+    serializeJson(doc, configFile);
     configFile.close();
-  }
-
-  // Apre il file in modalità scrittura
-  File configFile = LittleFS.open("/config.json", "w");
-  if (!configFile) {
-    debug("Failed to open config file for writing");
-    return;
-  }
-
-  serializeJson(doc, configFile);
-  configFile.close();
-  debug("Configuration saved successfully");
-
+    debug("Configuration saved successfully");
 }
-void loadConfig() {
-  if (!LittleFS.begin()) {
-    debug("Failed to mount file system");
-    return;
-  }
+void loadConfig()
+{
+    if (!LittleFS.begin())
+    {
+        debug("Failed to mount file system");
+        return;
+    }
 
-  if (!LittleFS.exists("/config.json")) {
-    debug("Config file not found");
-    return;
-  }
+    if (!LittleFS.exists("/config.json"))
+    {
+        debug("Config file not found");
+        return;
+    }
 
-  File configFile = LittleFS.open("/config.json", "r");
-  if (!configFile) {
-    debug("Failed to open config file");
-    return;
-  }
+    File configFile = LittleFS.open("/config.json", "r");
+    if (!configFile)
+    {
+        debug("Failed to open config file");
+        return;
+    }
 
-  StaticJsonDocument<512> doc;
-  DeserializationError error = deserializeJson(doc, configFile);
-  if (error) {
-    debug("Failed to parse config file");
-    return;
-  }
+    StaticJsonDocument<512> doc;
+    DeserializationError error = deserializeJson(doc, configFile);
+    if (error)
+    {
+        debug("Failed to parse config file");
+        return;
+    }
 
-  pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
-  for (int i = 0; i < pinConfigCount; i++) {
-    JsonObject pin = doc[i];
-    pinConfigs[i].pin = pin["pin"];
-    pinConfigs[i].name = pin["name"].as<String>();
-    pinConfigs[i].type = pin["type"].as<String>();
-  }
-  
-  debugMode = doc["debugMode"];
-  irrigationDurationConfig = doc["irrigationDurationConfig"];
-  irrigationStartHour = doc["irrigationStartHour"];
-  irrigationStartMinute = doc["irrigationStartMinute"];
-  scheduledIrrigation = doc["scheduledIrrigation"];
+    pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
+    for (int i = 0; i < pinConfigCount; i++)
+    {
+        JsonObject pin = doc[i];
+        pinConfigs[i].pin = pin["pin"];
+        pinConfigs[i].name = pin["name"].as<String>();
+        pinConfigs[i].type = pin["type"].as<String>();
+    }
 
-  configFile.close();
-  debug("Configuration loaded successfully");
+    debugMode = doc["debugMode"];
+    irrigationDurationConfig = doc["irrigationDurationConfig"];
+    irrigationStartHour = doc["irrigationStartHour"];
+    irrigationStartMinute = doc["irrigationStartMinute"];
+    scheduledIrrigation = doc["scheduledIrrigation"];
+
+    configFile.close();
+    debug("Configuration loaded successfully");
 }
 
 void configurePins()
@@ -270,7 +279,7 @@ void handleGitHubUpdate(FB_msg &msg)
 
     ESPhttpUpdate.rebootOnUpdate(false);
     // Imposta la funzione di callback per il progresso
-    //ESPhttpUpdate.onProgress(updateProgress);
+    // ESPhttpUpdate.onProgress(updateProgress);
 
     // Crea un messaggio che verrà aggiornato con il progresso
     menuID = bot.sendMessage("Aggiornamento in corso: 0%");
@@ -278,10 +287,10 @@ void handleGitHubUpdate(FB_msg &msg)
     t_httpUpdate_return ret = ESPhttpUpdate.update(client, rawUrl);
 
     // Rimuovi la funzione di callback
-    //ESPhttpUpdate.onProgress(nullptr);
+    // ESPhttpUpdate.onProgress(nullptr);
 
     // Elimina il messaggio di progresso
-    //bot.deleteMessage(menuID);
+    // bot.deleteMessage(menuID);
 
     switch (ret)
     {
@@ -351,7 +360,6 @@ void showConfigMenu(FB_msg &msg, int page = 1)
                                "Imposta Durata\tImposta Ora\nAttiva/Disattiva Programmazione",
                                "set_duration,set_time,toggle_schedule");
     }
-
 }
 
 void handleConfigCallback(FB_msg &msg)
@@ -360,7 +368,6 @@ void handleConfigCallback(FB_msg &msg)
     {
         bot.sendMessage("Inserisci la durata dell'irrigazione in secondi:");
         currentPinStep = CONFIG_PIN; // Usa questo enum per gestire la prossima risposta
-        
     }
     else if (msg.data == "set_time")
     {
@@ -375,8 +382,6 @@ void handleConfigCallback(FB_msg &msg)
     }
 }
 
-
-
 uint32_t startUnix; // храним время
 
 void newMsg(FB_msg &msg)
@@ -386,8 +391,8 @@ void newMsg(FB_msg &msg)
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
     debug("Nuovo messaggio ricevuto: " + msg.toString());
 
-    if (msg.OTA)         bot.update();
-
+    if (msg.OTA)
+        bot.update();
 
     if (msg.text == "/menu" || msg.text == "/config")
     {
@@ -444,8 +449,8 @@ void newMsg(FB_msg &msg)
 void handleTime()
 {
     if (millis() - now > 10000)
-    {        
-        
+    {
+
         // debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
     }
 }
@@ -457,8 +462,23 @@ void setup()
     // Configura i PIN di ingresso e uscita
     pinMode(pump_pin, OUTPUT);
 
+    // Configura la modalità Wi-Fi come stazione
+    WiFi.mode(WIFI_STA);
+
+    // Configura WiFiManager
+    wm.setConfigPortalBlocking(false);
+    wm.setConfigPortalTimeout(60);
+    if (wm.autoConnect("Irrigatore"))
+    {
+        Serial.println("Connesso...yeey :)");
+    }
+    else
+    {
+        Serial.println("Portale di configurazione in esecuzione");
+    }
+
     // Connetti alla rete Wi-Fi
-    wm.autoConnect(ssid, password);
+    //wm.autoConnect(ssid, password);
 
     // Configura il bot di Telegram
     // Imposta i comandi del bot
@@ -483,7 +503,7 @@ void setup()
     butt1.attachClick(handleButton1);
     butt2.attachClick(handleButton2);
     humidity_sens.attachLongPressStart([]()
-                              { bot.sendMessage("Pulsante 3 premuto!"); });
+                                       { bot.sendMessage("Pulsante 3 premuto!"); });
 
     // Carica la configurazione dalla EEPROM
     // loadConfig();
@@ -504,10 +524,8 @@ void loop()
     butt2.tick();
     humidity_sens.tick();
 
-    //handle irrigazione
+    // handle irrigazione
     handleIrrigazione();
-    
-    // handleTime();
 
-    
+    // handleTime();
 }
