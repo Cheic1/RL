@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.12"
+#define APP_VERSION "0.0.14"
 void loadConfig();
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -419,6 +419,16 @@ void newMsg(FB_msg &msg)
     {
         showConfigMenu(msg);
     }
+    else if(msg.text == "/attiva"){
+        if (!isIrrigating)
+        {
+            bot.sendMessage("Irrigazione Iniziata tramite /attiva");
+            irrigationStartTime = millis();
+            isIrrigating = true;
+            digitalWrite(pump_pin, HIGH);
+        }
+
+    }
     else if (msg.text == "/reset")
     {
         resetEEPROM();
@@ -430,15 +440,6 @@ void newMsg(FB_msg &msg)
     else if (msg.data != "")
     {
         handleConfigCallback(msg);
-    }
-    else if (msg.text != "/attiva"){
-        if (!isIrrigating)
-        {
-            bot.sendMessage("Irrigazione Iniziata tramite /attiva");
-            irrigationStartTime = millis();
-            isIrrigating = true;
-            digitalWrite(pump_pin, HIGH);
-        }
     }
     else
     {
