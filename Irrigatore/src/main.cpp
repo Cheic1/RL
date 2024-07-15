@@ -430,7 +430,7 @@ void newMsg(FB_msg &msg)
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
 
     debug("Nuovo messaggio ricevuto: " + msg.toString());
-
+    delay(100);
     if (msg.OTA)
         bot.update();
 
@@ -461,9 +461,10 @@ void newMsg(FB_msg &msg)
     }
     else if (msg.text == "/save")
     {
+        debug("Salvataggio configurazione... /save");
         saveConfig();
     }
-    
+    >
     else if (msg.text == "/reset")
     {
         resetEEPROM();
