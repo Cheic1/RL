@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.20"
+#define APP_VERSION "0.0.21"
 
 
 // void loadConfig();
@@ -556,7 +556,7 @@ void setup()
     debug("Version : " + String(APP_VERSION));
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
-    configTime(2 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    configTime(4 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     // Attendiamo un po' per assicurarci che il tempo sia stato sincronizzato
     while (time(nullptr) < 1000000000)
     {
@@ -566,7 +566,6 @@ void setup()
     time_t now;
     time(&now);
     currentTime = localtime(&now);
-
     debug("Ora attuale: " + t.timeString());
     debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
 
