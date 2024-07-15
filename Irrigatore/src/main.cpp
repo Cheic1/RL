@@ -8,12 +8,10 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.25"
-
+#define APP_VERSION "0.0.26"
 
 // void loadConfig();
 // void saveConfig();
-
 
 time_t now = time(nullptr);
 struct tm *currentTime = localtime(&now);
@@ -31,8 +29,8 @@ const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 const String chatIds[] = {"217950359", "000"};
 const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
 
-unsigned long irrigationStartTime = 0;       // Variabile per memorizzare l'ora di inizio dell'irrigazione
-bool isIrrigating = false;                   // Stato dell'irrigazione
+unsigned long irrigationStartTime = 0;        // Variabile per memorizzare l'ora di inizio dell'irrigazione
+bool isIrrigating = false;                    // Stato dell'irrigazione
 unsigned long irrigationDuration = 30 * 1000; // Durata dell'irrigazione
 
 unsigned long irrigationDurationConfig = 5000; // Durata di irrigazione configurata (in millisecondi)
@@ -186,7 +184,8 @@ void loadConfig()
         debug("Config file not found");
         return;
     }
-    else {
+    else
+    {
         debug("Config file found");
         delay(100);
     }
@@ -196,7 +195,8 @@ void loadConfig()
     {
         debug("Failed to open config file");
         return;
-    }else
+    }
+    else
     {
         debug("Reading config file");
     }
@@ -207,10 +207,8 @@ void loadConfig()
     {
         debug("Failed to parse config file");
         return;
-        
     }
     debug("Arriva");
-    
 
     // pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
     // for (int i = 0; i < pinConfigCount; i++)
@@ -224,12 +222,13 @@ void loadConfig()
     debugMode = doc["debugMode"];
     debug("debug mode: " + String(debugMode));
     irrigationDurationConfig = doc["irrigationDurationConfig"];
-    if(irrigationDurationConfig == 0) irrigationDurationConfig = 30 * 1000;
+    if (irrigationDurationConfig == 0)
+        irrigationDurationConfig = 30 * 1000;
     debug("irrigation duration: " + String(irrigationDurationConfig) + "ms");
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
     scheduledIrrigation = doc["scheduledIrrigation"];
-   
+
     configFile.close();
     debug("Configuration loaded successfully");
     debug("debug mode: " + String(debugMode));
@@ -373,7 +372,7 @@ void handleIrrigazione()
         // struct tm *currentTime = localtime(&now);
         FB_Time t(bot.getUnix(), 2);
 
-        if(currentTime->tm_hour == irrigationStartHour && currentTime->tm_min == irrigationStartMinute && currentTime->tm_sec == 00 && !isIrrigating)
+        if (currentTime->tm_hour == irrigationStartHour && currentTime->tm_min == irrigationStartMinute && currentTime->tm_sec == 00 && !isIrrigating)
         {
             bot.sendMessage("Irrigazione programmata Iniziata");
             irrigationStartTime = millis();
@@ -417,7 +416,8 @@ void handleConfigCallback(FB_msg &msg)
         bot.sendMessage(scheduledIrrigation ? "Irrigazione programmata attivata" : "Irrigazione programmata disattivata");
         saveConfig();
     }
-    else if (msg.data == "toggle_manual"){
+    else if (msg.data == "toggle_manual")
+    {
         if (!isIrrigating)
         {
             bot.sendMessage("Irrigazione Iniziata tramite toggle_manuale");
@@ -437,6 +437,8 @@ void newMsg(FB_msg &msg)
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
 
     debug("Nuovo messaggio ricevuto: " + msg.toString());
+    bot.sendMessage(msg.toString());
+
     delay(100);
     if (msg.OTA)
         bot.update();
@@ -445,7 +447,8 @@ void newMsg(FB_msg &msg)
     {
         showConfigMenu(msg);
     }
-    else if(msg.text == "/attiva"){
+    else if (msg.text == "/attiva")
+    {
         if (!isIrrigating)
         {
             bot.sendMessage("Irrigazione Iniziata tramite /attiva");
@@ -453,9 +456,9 @@ void newMsg(FB_msg &msg)
             isIrrigating = true;
             digitalWrite(pump_pin, HIGH);
         }
-
     }
-    else if( msg.text == "/disattiva"){
+    else if (msg.text == "/disattiva")
+    {
         if (isIrrigating)
         {
             bot.sendMessage("Irrigazione Finita tramite /disattiva");
@@ -463,14 +466,21 @@ void newMsg(FB_msg &msg)
             digitalWrite(pump_pin, LOW);
         }
     }
-    else if (msg.text == "/time"){
-         debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+    else if (msg.text == "/time")
+    {
+        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
     }
     else if (msg.text == "/save")
     {
         debug("Salvataggio configurazione... /save");
-        saveConfig();    }
-    
+        saveConfig();
+    }
+    else if (msg.text == "/load")
+    {
+        debug("load.. /load");
+        saveConfig();
+    }
+
     else if (msg.text == "/reset")
     {
         resetEEPROM();
@@ -551,7 +561,7 @@ void setup()
     }
 
     // Connetti alla rete Wi-Fi
-    //wm.autoConnect(ssid, password);
+    // wm.autoConnect(ssid, password);
 
     // Configura il bot di Telegram
     // Imposta i comandi del bot
@@ -596,11 +606,11 @@ void setup()
     // Debug
     debug("Sistema avviato.");
     debug("debug mode: " + String(debugMode) + "\n " +
-    "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
-    "irrigation start hour: " + String(irrigationStartHour) + "\n"
-    "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
-    "scheduledIrrigation: " + String(scheduledIrrigation)
-    );
+          "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+          "irrigation start hour: " + String(irrigationStartHour) + "\n"
+                                                                    "irrigation start minute: " +
+          String(irrigationStartMinute) + "\n" +
+          "scheduledIrrigation: " + String(scheduledIrrigation));
 }
 
 void loop()
