@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.23"
+#define APP_VERSION "0.0.24"
 
 
 // void loadConfig();
@@ -177,6 +177,7 @@ void loadConfig()
         debug("Failed to mount file system");
         return;
     }
+    debug("Mounting file system...");
 
     if (!LittleFS.exists("/config.json"))
     {
@@ -571,8 +572,8 @@ void setup()
 
     // Carica la configurazione dei PIN dalla EEPROM
     loadConfig();
-    saveConfig();
-    configurePins();
+    // saveConfig();
+    // configurePins();
 
     // Configura i pin dei pulsanti
     butt1.attachClick(handleButton1);
