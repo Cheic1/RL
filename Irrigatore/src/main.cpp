@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.21"
+#define APP_VERSION "0.0.23"
 
 
 // void loadConfig();
@@ -462,9 +462,8 @@ void newMsg(FB_msg &msg)
     else if (msg.text == "/save")
     {
         debug("Salvataggio configurazione... /save");
-        saveConfig();
-    }
-    >
+        saveConfig();    }
+    
     else if (msg.text == "/reset")
     {
         resetEEPROM();
