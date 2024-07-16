@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.30"
+#define APP_VERSION "0.0.31"
 
 // void loadConfig();
 // void saveConfig();
@@ -29,13 +29,12 @@ const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 const String chatIds[] = {"217950359", "851696190"};
 const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
 const String chatIds1 = "217950359,851696190";
-unsigned long irrigationStartTime = 0;        // Variabile per memorizzare l'ora di inizio dell'irrigazione
-bool isIrrigating = false;                    // Stato dell'irrigazione
-unsigned long irrigationDuration = 30 * 1000; // Durata dell'irrigazione
+unsigned long irrigationStartTime = 0; // Variabile per memorizzare l'ora di inizio dell'irrigazione
+bool isIrrigating = false;             // Stato dell'irrigazione
 
-unsigned long irrigationDurationConfig = 5000; // Durata di irrigazione configurata (in millisecondi)
-unsigned long irrigationStartHour = 12;        // Ora di avvio dell'irrigazione (0-23)
-unsigned long irrigationStartMinute = 0;       // Minuto di avvio dell'irrigazione (0-59)
+unsigned long irrigationDurationConfig = 30 * 1000; // Durata di irrigazione configurata (in millisecondi)
+unsigned long irrigationStartHour = 20;             // Ora di avvio dell'irrigazione (0-23)
+unsigned long irrigationStartMinute = 0;            // Minuto di avvio dell'irrigazione (0-59)
 bool scheduledIrrigation = false;
 // Definizione dei PIN e altre variabili globali
 const int maxPins = 10; // Numero massimo di PIN configurabili
@@ -62,8 +61,8 @@ int currentPinIndex = 0;
 String lastMenu = "";
 
 // Token del bot di Telegram
-// const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
-const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g";// CheicBot
+const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
+// const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
 enum PinConfigStep
 {
     NONE,
@@ -84,16 +83,14 @@ FastBot bot(TELEGRAM_BOT_TOKEN);
 
 void debug(String message)
 {
+    debugMode = 3; // Visualizza il debug su seriale, telegram e entrambi
     if (debugMode == 1 || debugMode == 3)
     {
         Serial.println(message);
     }
     if (debugMode == 2 || debugMode == 3)
     {
-        for (int i = 0; i < numChats; i++)
-        {
-            bot.sendMessage(message, chatIds[i]);
-        }
+        bot.sendMessage(message);
     }
 }
 
@@ -125,17 +122,39 @@ void resetEEPROM()
     debug("EEPROM resettata con successo.");
 }
 
+void readConfig()
+{
+    if (!LittleFS.begin())
+    {
+        Serial.println("An Error has occurred while mounting LittleFS");
+        return;
+    }
+
+    File file = LittleFS.open("/config.json", "r");
+    if (!file)
+    {
+        Serial.println("Failed to open file for reading");
+        return;
+    }
+
+    Serial.println("File Content:");
+    while (file.available())
+    {
+        Serial.write(file.read());
+    }
+    file.close();
+}
 void saveConfig()
 {
     StaticJsonDocument<512> doc;
 
-    for (int i = 0; i <= pinConfigCount; i++)
-    {
-        JsonObject pin = doc.createNestedObject();
-        pin["pin"] = pinConfigs[i].pin;
-        pin["name"] = pinConfigs[i].name;
-        pin["type"] = pinConfigs[i].type;
-    }
+    // for (int i = 0; i <= pinConfigCount; i++)
+    // {
+    //     JsonObject pin = doc.createNestedObject();
+    //     pin["pin"] = pinConfigs[i].pin;
+    //     pin["name"] = pinConfigs[i].name;
+    //     pin["type"] = pinConfigs[i].type;
+    // }
     doc["debugMode"] = debugMode;
     doc["irrigationDurationConfig"] = irrigationDurationConfig;
     doc["irrigationStartHour"] = irrigationStartHour;
@@ -170,14 +189,15 @@ void saveConfig()
 }
 void loadConfig()
 {
-    delay(100);
+
     if (!LittleFS.begin())
     {
         debug("Failed to mount file system");
         return;
+        // }else {
+        // delay(100);
+        // debug("Mounting file system...");
     }
-    delay(100);
-    debug("Mounting file system...");
 
     if (!LittleFS.exists("/config.json"))
     {
@@ -186,8 +206,8 @@ void loadConfig()
     }
     else
     {
-        debug("Config file found");
-        delay(100);
+        // debug("Config file found");
+        // delay(100);
     }
 
     File configFile = LittleFS.open("/config.json", "r");
@@ -198,7 +218,7 @@ void loadConfig()
     }
     else
     {
-        debug("Reading config file");
+        // debug("Reading config file");
     }
 
     StaticJsonDocument<512> doc;
@@ -208,7 +228,6 @@ void loadConfig()
         debug("Failed to parse config file");
         return;
     }
-    debug("Arriva");
 
     // pinConfigCount = doc.size() - 5; // Sottraiamo 5 per le altre configurazioni
     // for (int i = 0; i < pinConfigCount; i++)
@@ -220,24 +239,23 @@ void loadConfig()
     // }
 
     debugMode = doc["debugMode"];
-    debug("debug mode: " + String(debugMode));
+    // debug("debug mode: " + String(debugMode));
     irrigationDurationConfig = doc["irrigationDurationConfig"];
-    if (irrigationDurationConfig == 0)
-        irrigationDurationConfig = 30 * 1000;
-    debug("irrigation duration: " + String(irrigationDurationConfig) + "ms");
+    if (irrigationDurationConfig == 0) irrigationDurationConfig = 30 * 1000;
+    // debug("irrigation duration: " + String(irrigationDurationConfig) + "ms");
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
     scheduledIrrigation = doc["scheduledIrrigation"];
 
     configFile.close();
     debug("Configuration loaded successfully");
-    debug("debug mode: " + String(debugMode));
-    // debug("debug mode: " + String(debugMode) + "\n " +
-    // "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
-    // "irrigation start hour: " + String(irrigationStartHour) + "\n"
-    // "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
-    // "scheduledIrrigation: " + String(scheduledIrrigation)
-    // );
+    // debug("debug mode: " + String(debugMode));
+
+    debug("debug mode: " +      String(debugMode) + "\n" +
+          "irrigation duration: " +     String(irrigationDurationConfig) + "ms\n" +
+          "irrigation start hour: " +   String(irrigationStartHour) + "\n" +
+          "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
+          "scheduledIrrigation: " + String(scheduledIrrigation));
 }
 
 void configurePins()
@@ -361,7 +379,7 @@ void handleIrrigazione()
 {
     if (isIrrigating && (millis() - irrigationStartTime >= irrigationDurationConfig))
     {
-        bot.sendMessage("Irrigazione Finita dopo " + String(millis() - irrigationStartTime));
+        bot.sendMessage("Irrigazione Finita dopo " + String((millis() - irrigationStartTime) / 1000) + " s");
         isIrrigating = false;
         digitalWrite(pump_pin, LOW);
     }
@@ -399,7 +417,7 @@ void showConfigMenu(FB_msg &msg, int page = 1)
         {
             bot.inlineMenuCallback("Configurazione Irrigazione",
                                    "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
-                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i] );
+                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i]);
         }
     }
 }
@@ -439,13 +457,13 @@ uint32_t startUnix; // храним время
 void newMsg(FB_msg &msg)
 {
     FB_Time t(msg.unix, 2);
-    if (msg.unix < startUnix){
+    if (msg.unix < startUnix)
+    {
         debug("messaggio bloccato da :" + String(startUnix));
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
     }
-        
 
-    debug( msg.toString());
+    debug(msg.toString());
     // bot.sendMessage(msg.toString());
 
     delay(100);
@@ -469,7 +487,8 @@ void newMsg(FB_msg &msg)
     {
         if (!isIrrigating)
         {
-            bot.sendMessage("Irrigazione Iniziata tramite /attiva");
+            debug("Irrigazione Iniziata tramite /attiva");
+            debug("Durata attesa: " + String(irrigationDurationConfig / 1000) + " secondi");
             irrigationStartTime = millis();
             isIrrigating = true;
             digitalWrite(pump_pin, HIGH);
@@ -488,7 +507,12 @@ void newMsg(FB_msg &msg)
     else if (msg.text == "/load")
     {
         debug("load.. /load");
-        saveConfig();
+        loadConfig();
+    }
+    else if (msg.text == "/readConfig")
+    {
+        debug("readConfig.. /readConfig");
+        readConfig();
     }
 
     else if (msg.text == "/reset")
@@ -579,7 +603,7 @@ void setup()
     bot.attach(newMsg);
     startUnix = bot.getUnix(); // запомнили
     // Invia un messaggio per indicare l'inizializzazione dell'irrigatore
-    bot.sendMessage("Irrigatore inizializzato \n /menu : apri il menu setup\n");
+    debug("Irrigatore inizializzato \n /menu : apri il menu setup\n");
     debug("Version : " + String(APP_VERSION));
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
@@ -593,11 +617,10 @@ void setup()
     time_t now;
     time(&now);
     currentTime = localtime(&now);
-    debug("Ora attuale: " + t.timeString());
-    debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+    debug("Ora attuale: t " + t.timeString() + "\nOra attuale: currentTime " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
 
     // Carica la configurazione dei PIN dalla EEPROM
-    loadConfig();
+    // loadConfig();
     // saveConfig();
     // configurePins();
 
@@ -608,7 +631,7 @@ void setup()
                                        { bot.sendMessage("Pulsante 3 premuto!"); });
 
     // Carica la configurazione dalla EEPROM
-    // loadConfig();
+    loadConfig();
 
     // Configura i PIN in base alla configurazione caricata
     // configurePins();

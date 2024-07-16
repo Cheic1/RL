@@ -69,7 +69,7 @@ def main():
     # Esegui pio run
     print("Esecuzione di 'pio run --environment d1'...")
     # run_command("pio run --environment d1")
-    run_command("C:\Users\franc\.platformio\penv\Scripts\platformio.exe run")
+    run_command("C:\\Users\\franc\\.platformio\\penv\\Scripts\\platformio.exe run")
     time.sleep(1);
 
 
