@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.31"
+#define APP_VERSION "0.0.32"
 
 // void loadConfig();
 // void saveConfig();
@@ -640,9 +640,8 @@ void setup()
     debug("Sistema avviato.");
     debug("debug mode: " + String(debugMode) + "\n " +
           "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
-          "irrigation start hour: " + String(irrigationStartHour) + "\n"
-                                                                    "irrigation start minute: " +
-          String(irrigationStartMinute) + "\n" +
+          "irrigation start hour: " + String(irrigationStartHour) + "\n" +
+          "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
           "scheduledIrrigation: " + String(scheduledIrrigation));
 }
 
