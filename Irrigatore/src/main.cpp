@@ -399,7 +399,7 @@ void showConfigMenu(FB_msg &msg, int page = 1)
         {
             bot.inlineMenuCallback("Configurazione Irrigazione",
                                    "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
-                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i]);
+                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i] );
         }
     }
 }
@@ -408,18 +408,18 @@ void handleConfigCallback(FB_msg &msg)
 {
     if (msg.data == "set_duration")
     {
-        bot.sendMessage("Inserisci la durata dell'irrigazione in secondi:");
+        debug("Inserisci la durata dell'irrigazione in secondi:");
         currentPinStep = CONFIG_PIN; // Usa questo enum per gestire la prossima risposta
     }
     else if (msg.data == "set_time")
     {
-        bot.sendMessage("Inserisci l'ora di avvio dell'irrigazione nel formato HH:MM");
+        debug("Inserisci l'ora di avvio dell'irrigazione nel formato HH:MM");
         currentPinStep = CONFIG_NAME; // Usa questo enum per gestire la prossima risposta
     }
     else if (msg.data == "toggle_schedule")
     {
         scheduledIrrigation = !scheduledIrrigation;
-        bot.sendMessage(scheduledIrrigation ? "Irrigazione programmata attivata" : "Irrigazione programmata disattivata");
+        debug(scheduledIrrigation ? "Irrigazione programmata attivata" : "Irrigazione programmata disattivata");
         saveConfig();
     }
     else if (msg.data == "toggle_manual")
@@ -580,7 +580,7 @@ void setup()
     debug("Version : " + String(APP_VERSION));
     // bot.answer("Sicuro?");
     FB_Time t(bot.getUnix(), 2);
-    configTime(4 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    configTime(2 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     // Attendiamo un po' per assicurarci che il tempo sia stato sincronizzato
     while (time(nullptr) < 1000000000)
     {
