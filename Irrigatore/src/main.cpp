@@ -28,7 +28,7 @@ const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 // Array di chat ID
 const String chatIds[] = {"217950359", "851696190"};
 const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
-
+const String chatIds1 = "217950359,851696190";
 unsigned long irrigationStartTime = 0;        // Variabile per memorizzare l'ora di inizio dell'irrigazione
 bool isIrrigating = false;                    // Stato dell'irrigazione
 unsigned long irrigationDuration = 30 * 1000; // Durata dell'irrigazione
@@ -62,8 +62,8 @@ int currentPinIndex = 0;
 String lastMenu = "";
 
 // Token del bot di Telegram
-const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
-
+// const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
+const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g";// CheicBot
 enum PinConfigStep
 {
     NONE,
@@ -439,11 +439,14 @@ uint32_t startUnix; // храним время
 void newMsg(FB_msg &msg)
 {
     FB_Time t(msg.unix, 2);
-    if (msg.unix < startUnix)
+    if (msg.unix < startUnix){
+        debug("messaggio bloccato da :" + String(startUnix));
         return; // Blocca per i messaggi precedenti a quelli che sono stati inviati
+    }
+        
 
     debug( msg.toString());
-    bot.sendMessage(msg.toString());
+    // bot.sendMessage(msg.toString());
 
     delay(100);
     if (msg.OTA)
@@ -572,7 +575,7 @@ void setup()
 
     // Configura il bot di Telegram
     // Imposta i comandi del bot
-    bot.setChatID(CHAT_ID);
+    bot.setChatID(chatIds1);
     bot.attach(newMsg);
     startUnix = bot.getUnix(); // запомнили
     // Invia un messaggio per indicare l'inizializzazione dell'irrigatore

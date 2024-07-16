@@ -13,8 +13,11 @@ def increment_version():
     # ... [Il codice precedente per incrementare la versione rimane invariato] ...
     # Leggi il contenuto del file
     try:
-        with open(VERSION_FILE, 'r') as file:
+        with open(VERSION_FILE, 'r', encoding="utf8") as file:
             content = file.read()
+
+    
+
     except FileNotFoundError:
         print(f"File {VERSION_FILE} non trovato. Creazione di un nuovo file.")
         content = f'#define {VERSION_DEFINE} "0.0.0"\n'
@@ -42,7 +45,7 @@ def increment_version():
     new_content = re.sub(pattern, f'#define {VERSION_DEFINE} "{new_version}"', content)
 
     # Scrivi il contenuto aggiornato nel file
-    with open(VERSION_FILE, 'w') as file:
+    with open(VERSION_FILE, 'w', encoding="utf8") as file:
         file.write(new_content)
 
     print(f"Versione aggiornata da {current_version} a {new_version}")
@@ -65,7 +68,8 @@ def main():
 
     # Esegui pio run
     print("Esecuzione di 'pio run --environment d1'...")
-    run_command("pio run --environment d1")
+    # run_command("pio run --environment d1")
+    run_command("C:\Users\franc\.platformio\penv\Scripts\platformio.exe run")
     time.sleep(1);
 
 
