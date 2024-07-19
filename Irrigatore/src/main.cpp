@@ -8,13 +8,14 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.32"
+#define APP_VERSION "0.0.33"
 
 // void loadConfig();
 // void saveConfig();
 
-time_t now = time(nullptr);
-struct tm *currentTime = localtime(&now);
+time_t now;
+struct tm timeinfo;
+
 // Variabile di debug
 int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
 int Stato = 1;
@@ -61,8 +62,8 @@ int currentPinIndex = 0;
 String lastMenu = "";
 
 // Token del bot di Telegram
-const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
-// const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
+// const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
+const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
 enum PinConfigStep
 {
     NONE,
@@ -241,7 +242,8 @@ void loadConfig()
     debugMode = doc["debugMode"];
     // debug("debug mode: " + String(debugMode));
     irrigationDurationConfig = doc["irrigationDurationConfig"];
-    if (irrigationDurationConfig == 0) irrigationDurationConfig = 30 * 1000;
+    if (irrigationDurationConfig == 0)
+        irrigationDurationConfig = 30 * 1000;
     // debug("irrigation duration: " + String(irrigationDurationConfig) + "ms");
     irrigationStartHour = doc["irrigationStartHour"];
     irrigationStartMinute = doc["irrigationStartMinute"];
@@ -251,9 +253,9 @@ void loadConfig()
     debug("Configuration loaded successfully");
     // debug("debug mode: " + String(debugMode));
 
-    debug("debug mode: " +      String(debugMode) + "\n" +
-          "irrigation duration: " +     String(irrigationDurationConfig) + "ms\n" +
-          "irrigation start hour: " +   String(irrigationStartHour) + "\n" +
+    debug("debug mode: " + String(debugMode) + "\n" +
+          "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+          "irrigation start hour: " + String(irrigationStartHour) + "\n" +
           "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
           "scheduledIrrigation: " + String(scheduledIrrigation));
 }
@@ -386,39 +388,34 @@ void handleIrrigazione()
 
     if (scheduledIrrigation)
     {
-        // time_t now = time(nullptr);
-        // struct tm *currentTime = localtime(&now);
-        FB_Time t(bot.getUnix(), 2);
-
-        if (currentTime->tm_hour == irrigationStartHour && currentTime->tm_min == irrigationStartMinute && currentTime->tm_sec == 00 && !isIrrigating)
+        if (timeinfo.tm_hour == irrigationStartHour &&
+            timeinfo.tm_min == irrigationStartMinute &&
+            timeinfo.tm_sec < 2 && !isIrrigating)
         {
-            bot.sendMessage("Irrigazione programmata Iniziata");
+            debug("Irrigazione programmata Iniziata " + String(timeinfo.tm_sec));
+
             irrigationStartTime = millis();
             isIrrigating = true;
             digitalWrite(pump_pin, HIGH);
         }
     }
 }
+
 // Aggiungi queste funzioni per gestire il menu inline
 void showConfigMenu(FB_msg &msg, int page = 1)
 {
     if (page == 0)
     {
-        for (int i = 0; i < numChats; i++)
-        {
-            bot.inlineMenuCallback("Configurazione Irrigazione",
-                                   "Menu-config\tReset\nAttiva/Disattiva Programmazione",
-                                   "/menu,/reset,toggle_schedule", chatIds[i]);
-        }
+        bot.inlineMenuCallback("Configurazione Irrigazione",
+                               "Menu-config\tReset\nAttiva/Disattiva Programmazione",
+                               "/menu,/reset,toggle_schedule");
     }
     else if (page == 1)
     {
-        for (int i = 0; i < numChats; i++)
-        {
-            bot.inlineMenuCallback("Configurazione Irrigazione",
-                                   "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
-                                   "set_duration,set_time,toggle_manual,toggle_schedule", chatIds[i]);
-        }
+
+        bot.inlineMenuCallback("Configurazione Irrigazione",
+                               "Imposta Durata\tImposta Ora\tON/OFF manuale\n ON/OFF Programmazione",
+                               "set_duration,set_time,toggle_manual,toggle_schedule");
     }
 }
 
@@ -476,7 +473,8 @@ void newMsg(FB_msg &msg)
     }
     else if (msg.text == "/time")
     {
-        debug("Ora attuale: " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
+        debug("Ora attuale: " + String(timeinfo.tm_hour) + ":" +
+              String(timeinfo.tm_min) + ":" + String(timeinfo.tm_sec));
     }
     else if (msg.text == "/save")
     {
@@ -609,16 +607,11 @@ void setup()
     FB_Time t(bot.getUnix(), 2);
     configTime(2 * 3600, 0, "pool.ntp.org", "time.nist.gov");
     // Attendiamo un po' per assicurarci che il tempo sia stato sincronizzato
-    while (time(nullptr) < 1000000000)
+    while (!getLocalTime(&timeinfo))
     {
-        delay(100);
+        Serial.println("Attesa per la sincronizzazione NTP...");
+        delay(1000);
     }
-
-    time_t now;
-    time(&now);
-    currentTime = localtime(&now);
-    debug("Ora attuale: t " + t.timeString() + "\nOra attuale: currentTime " + String(currentTime->tm_hour) + ":" + String(currentTime->tm_min) + ":" + String(currentTime->tm_sec));
-
     // Carica la configurazione dei PIN dalla EEPROM
     // loadConfig();
     // saveConfig();
@@ -647,6 +640,11 @@ void setup()
 
 void loop()
 {
+    if (!getLocalTime(&timeinfo))
+    {
+        Serial.println("Impossibile ottenere il tempo");
+        return;
+    }
     // Verifica nuovi messaggi per il bot di Telegram
     bot.tick();
     // Controllo dei pulsanti
@@ -656,6 +654,4 @@ void loop()
 
     // handle irrigazione
     handleIrrigazione();
-
-    // handleTime();
 }
