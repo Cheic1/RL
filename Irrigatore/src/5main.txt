@@ -11,14 +11,17 @@
 #define APP_VERSION "0.0.33"
 // Token del bot di Telegram
 const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
-const char *TELEGRAM_BOT_TOKEN_CheicBot = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
+//const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
 
+// void loadConfig();
+// void saveConfig();
 
 time_t now;
 struct tm timeinfo;
 
 // Variabile di debug
-uint8_t debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
+int debugMode = 3; // 0: nessun debug, 1: seriale, 2: telegram, 3: entrambi
+int Stato = 1;
 const int pump_pin = D3;
 
 // Credenziali Wi-Fi
@@ -27,51 +30,59 @@ const char *password = "fZET6ouLwc3wYG6WyfDy4fUL";
 #define CHAT_ID "217950359"
 
 // Array di chat ID
-const String chatIds = "217950359,851696190";
+const String chatIds[] = {"217950359", "851696190"};
+const int numChats = sizeof(chatIds) / sizeof(chatIds[0]);
+const String chatIds1 = "217950359,851696190";
 unsigned long irrigationStartTime = 0; // Variabile per memorizzare l'ora di inizio dell'irrigazione
 bool isIrrigating = false;             // Stato dell'irrigazione
+
 unsigned long irrigationDurationConfig = 30 * 1000; // Durata di irrigazione configurata (in millisecondi)
 unsigned long irrigationStartHour = 20;             // Ora di avvio dell'irrigazione (0-23)
 unsigned long irrigationStartMinute = 0;            // Minuto di avvio dell'irrigazione (0-59)
 bool scheduledIrrigation = false;
+// Definizione dei PIN e altre variabili globali
+const int maxPins = 10; // Numero massimo di PIN configurabili
 
+struct PinConfig
+{
+    int pin;
+    String name;
+    String type; // "o= output", "i=input", "p = input_pullup"
+};
 
-
+PinConfig pinConfigs[maxPins];
+int pinConfigCount = 0;
 
 OneButton butt1(D5, 2);
 OneButton butt2(D6, 2);
 OneButton humidity_sens(D4, 2);
 
+int depth = 0;
 
-// // Definizione dei PIN e altre variabili globali
-// const int maxPins = 10; // Numero massimo di PIN configurabili
-// struct PinConfig
-// {
-//     int pin;
-//     String name;
-//     String type; // "o= output", "i=input", "p = input_pullup"
-// };
+int32_t menuID = 0;
+String currentPinType = "";
+int currentPinIndex = 0;
+String lastMenu = "";
 
-// PinConfig pinConfigs[maxPins];
-// int pinConfigCount = 0;
-// enum PinConfigStep
-// {
-//     NONE,
-//     CONFIG_PIN,
-//     CONFIG_NAME,
-//     CONFIG_TYPE,
-//     CONFIG_CONFIRM,
-//     Menu1
-// };
 
-// PinConfigStep currentPinStep = NONE;
+enum PinConfigStep
+{
+    NONE,
+    CONFIG_PIN,
+    CONFIG_NAME,
+    CONFIG_TYPE,
+    CONFIG_CONFIRM,
+    Menu1
+};
+
+PinConfigStep currentPinStep = NONE;
 
 // WiFiManager per gestire la connessione Wi-Fi
 WiFiManager wm;
 
 // FastBot per gestire il bot di Telegram
 FastBot bot(TELEGRAM_BOT_TOKEN);
-FastBot bot1(TELEGRAM_BOT_TOKEN_CheicBot);
+
 void debug(String message)
 {
     debugMode = 3; // Visualizza il debug su seriale, telegram e entrambi
@@ -82,7 +93,6 @@ void debug(String message)
     if (debugMode == 2 || debugMode == 3)
     {
         bot.sendMessage(message);
-        // Da aggiungere il codice per inviare messaggi Telegram al bot1 come debug
     }
 }
 
@@ -441,7 +451,6 @@ uint32_t startUnix; // храним время
 
 void newMsg(FB_msg &msg)
 {
-
     FB_Time t(msg.unix, 2);
     if (msg.unix < startUnix)
     {
@@ -455,8 +464,6 @@ void newMsg(FB_msg &msg)
     delay(100);
     if (msg.OTA)
         bot.update();
-
-        
 
     if (msg.text == "/menu" || msg.text == "/config")
     {
@@ -588,7 +595,7 @@ void setup()
 
     // Configura il bot di Telegram
     // Imposta i comandi del bot
-    bot.setChatID(chatIds);
+    bot.setChatID(chatIds1);
     bot.attach(newMsg);
     startUnix = bot.getUnix(); // запомнили
     // Invia un messaggio per indicare l'inizializzazione dell'irrigatore
