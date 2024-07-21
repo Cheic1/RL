@@ -8,10 +8,10 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.34"
+#define APP_VERSION "0.0.35"
 // Token del bot di Telegram
-//const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
-const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
+const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
+//const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
 
 // void loadConfig();
 // void saveConfig();
@@ -469,7 +469,7 @@ void newMsg(FB_msg &msg)
     if (msg.OTA)
     {
         bot.update();
-        return;
+        //return;
     }
 
     if (msg.text == "/menu" || msg.text == "/config")
@@ -636,11 +636,11 @@ void setup()
 
     // Debug
     debug("Sistema avviato.");
-    debug("debug mode: " + String(debugMode) + "\n " +
-          "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
-          "irrigation start hour: " + String(irrigationStartHour) + "\n" +
-          "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
-          "scheduledIrrigation: " + String(scheduledIrrigation));
+    // debug("debug mode: " + String(debugMode) + "\n " +
+    //       "irrigation duration: " + String(irrigationDurationConfig) + "ms\n" +
+    //       "irrigation start hour: " + String(irrigationStartHour) + "\n" +
+    //       "irrigation start minute: " + String(irrigationStartMinute) + "\n" +
+    //       "scheduledIrrigation: " + String(scheduledIrrigation));
 }
 
 
