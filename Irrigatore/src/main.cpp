@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.35"
+#define APP_VERSION "0.0.36"
 // Token del bot di Telegram
 const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
 //const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
@@ -21,7 +21,7 @@ struct tm timeinfo;
 
 
 unsigned long previousMillis = 0; // Variabile per memorizzare l'ultimo tempo
-const unsigned long interval = 60000; // Intervallo per il modem sleep (in millisecondi)
+int interval = 60; // Intervallo per il modem sleep (in secondi)
 bool wifiOn = true; // Stato del Wi-Fi
 
 // Variabile di debug
@@ -456,6 +456,13 @@ uint32_t startUnix; // храним время
 
 void newMsg(FB_msg &msg)
 {
+    interval = 60*5;
+    previousMillis = millis();
+    if (msg.OTA)
+    {
+        bot.update();
+        return;
+    }
     FB_Time t(msg.unix, 2);
     if (msg.unix < startUnix)
     {
@@ -466,11 +473,7 @@ void newMsg(FB_msg &msg)
     debug(msg.toString());
     // bot.sendMessage(msg.toString());
 
-    if (msg.OTA)
-    {
-        bot.update();
-        //return;
-    }
+
 
     if (msg.text == "/menu" || msg.text == "/config")
     {
@@ -564,6 +567,8 @@ void newMsg(FB_msg &msg)
             break;
         }
     }
+    
+    
 }
 
 void handleTime()
@@ -656,26 +661,27 @@ void loop()
 
     unsigned long currentMillis = millis();
 
-    if (wifiOn && currentMillis - previousMillis >= interval)
+    if (wifiOn && currentMillis - previousMillis >= interval*1000)
     {
         //debug("Modem Sleep attivato");
         WiFi.mode(WIFI_OFF);
         WiFi.forceSleepBegin();
         delay(1);
-         Serial.println("WiFi is down");
+        Serial.println("WiFi is down");
         wifiOn = false;
         previousMillis = currentMillis;
     }
-    else if (!wifiOn && currentMillis - previousMillis >= interval)
+    else if (!wifiOn && currentMillis - previousMillis >= interval*1000)
     {
         //debug("Modem Sleep disattivato");
-
+        
         WiFi.forceSleepWake();
         delay(1);
         WiFi.mode(WIFI_STA);
         wifiOn = true;
         WiFi.reconnect();
         previousMillis = currentMillis;
+        interval = 60;
     }
 
     // Verifica nuovi messaggi per il bot di Telegram
