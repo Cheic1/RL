@@ -8,7 +8,7 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.36"
+#define APP_VERSION "0.0.37"
 // Token del bot di Telegram
 const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
 //const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
@@ -661,28 +661,28 @@ void loop()
 
     unsigned long currentMillis = millis();
 
-    if (wifiOn && currentMillis - previousMillis >= interval*1000)
-    {
-        //debug("Modem Sleep attivato");
-        WiFi.mode(WIFI_OFF);
-        WiFi.forceSleepBegin();
-        delay(1);
-        Serial.println("WiFi is down");
-        wifiOn = false;
-        previousMillis = currentMillis;
-    }
-    else if (!wifiOn && currentMillis - previousMillis >= interval*1000)
-    {
-        //debug("Modem Sleep disattivato");
+    // if (wifiOn && currentMillis - previousMillis >= interval*1000)
+    // {
+    //     //debug("Modem Sleep attivato");
+    //     WiFi.mode(WIFI_OFF);
+    //     WiFi.forceSleepBegin();
+    //     delay(1);
+    //     Serial.println("WiFi is down");
+    //     wifiOn = false;
+    //     previousMillis = currentMillis;
+    // }
+    // else if (!wifiOn && currentMillis - previousMillis >= interval*1000)
+    // {
+    //     //debug("Modem Sleep disattivato");
         
-        WiFi.forceSleepWake();
-        delay(1);
-        WiFi.mode(WIFI_STA);
-        wifiOn = true;
-        WiFi.reconnect();
-        previousMillis = currentMillis;
-        interval = 60;
-    }
+    //     WiFi.forceSleepWake();
+    //     delay(1);
+    //     WiFi.mode(WIFI_STA);
+    //     wifiOn = true;
+    //     WiFi.reconnect();
+    //     previousMillis = currentMillis;
+    //     interval = 60;
+    // }
 
     // Verifica nuovi messaggi per il bot di Telegram
     bot.tick();
