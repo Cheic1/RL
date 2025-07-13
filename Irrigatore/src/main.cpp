@@ -8,9 +8,9 @@
 #include <ESP8266httpUpdate.h>
 #include <LittleFS.h>
 
-#define APP_VERSION "0.0.37"
+#define APP_VERSION "0.0.40"
 // Token del bot di Telegram
-const char *TELEGRAM_BOT_TOKEN = "7422920725:AAG9RiNmdzPwYlXkMtKuv5j7FQx8aOY-jXs"; // Emmisbot
+const char *TELEGRAM_BOT_TOKEN = "7422920725:AAEJ0Fh6x9PdZ_PmG2edbHyqh4y9L5ceNUU"; // Emmisbot
 //const char *TELEGRAM_BOT_TOKEN = "391032347:AAFBVponQ6ck0vd6W930dPzf6Ygj_yi5D9g"; // CheicBot
 
 // void loadConfig();
